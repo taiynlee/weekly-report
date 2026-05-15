@@ -7,10 +7,12 @@ requires-python = ">=3.13"
 dependencies = [
     "alembic>=1.18.4",
     "anthropic>=0.102.0",
+    "boto3>=1.43.8",
     "cachetools>=7.1.1",
     "fastapi>=0.136.1",
     "pydantic-settings>=2.14.1",
     "python-multipart>=0.0.28",
+    "python-pptx>=1.0.2",
     "sqlalchemy>=2.0.49",
     "uvicorn>=0.47.0",
 ]

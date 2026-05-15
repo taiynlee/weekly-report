@@ -4,7 +4,6 @@ import { Loader2 } from 'lucide-react'
 import { fetchWeeks, fetchKPIsByWeek, fetchKPI, type Week, type KPIListItem, type KPI } from '../api/client'
 import { WeekSelector } from '../components/WeekSelector'
 import { KpiDetail } from '../components/KpiDetail'
-import { TrendChart } from '../components/TrendChart'
 
 export const Route = createFileRoute('/')({ component: Dashboard })
 
@@ -55,7 +54,7 @@ function Dashboard() {
       {/* Sub-header: week selector */}
       <div className="flex items-center justify-between">
         <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">
-          2026 KPI Dashboard
+          {new Date().getFullYear()} KPI Dashboard
         </h2>
         <WeekSelector weeks={weeks} value={selectedWeek} onChange={setSelectedWeek} />
       </div>
@@ -95,13 +94,7 @@ function Dashboard() {
         )}
 
         {!loadingList && !loadingKpi && kpi && (
-          <>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-50 mb-3">{kpi.title}</h3>
-            <KpiDetail kpi={kpi} />
-            <div className="mt-4">
-              <TrendChart kpiNumber={kpi.number} />
-            </div>
-          </>
+          <KpiDetail kpi={kpi} />
         )}
       </div>
     </div>

@@ -32,9 +32,6 @@ class KPI(Base):
     highlights: Mapped[list["Highlight"]] = relationship(
         back_populates="kpi", cascade="all, delete-orphan", order_by="Highlight.order_index"
     )
-    lowlights: Mapped[list["Lowlight"]] = relationship(
-        back_populates="kpi", cascade="all, delete-orphan", order_by="Lowlight.order_index"
-    )
 
 
 class SubKPI(Base):
@@ -71,24 +68,21 @@ class Highlight(Base):
     order_index: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[str] = mapped_column(String(20), default="not_started")
     llm_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    link: Mapped[str | None] = mapped_column(Text, nullable=True)
-    image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
-    video_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    percentage: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     kpi: Mapped["KPI"] = relationship(back_populates="highlights")
+    media: Mapped[list["HighlightMedia"]] = relationship(
+        back_populates="highlight", cascade="all, delete-orphan", order_by="HighlightMedia.order_index"
+    )
 
 
-class Lowlight(Base):
-    __tablename__ = "lowlights"
+class HighlightMedia(Base):
+    __tablename__ = "highlight_media"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    kpi_id: Mapped[int] = mapped_column(ForeignKey("kpis.id"), nullable=False)
-    content: Mapped[str] = mapped_column(Text, nullable=False)
+    highlight_id: Mapped[int] = mapped_column(ForeignKey("highlights.id"), nullable=False)
+    media_type: Mapped[str] = mapped_column(String(10), nullable=False)  # 'image' or 'video'
+    url: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
-    status: Mapped[str] = mapped_column(String(20), default="not_started")
-    llm_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
-    link: Mapped[str | None] = mapped_column(Text, nullable=True)
-    image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
-    video_path: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    kpi: Mapped["KPI"] = relationship(back_populates="lowlights")
+    highlight: Mapped["Highlight"] = relationship(back_populates="media")

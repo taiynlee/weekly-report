@@ -79,4 +79,4 @@
 ## Task 15：文件同步
 - [x] Step 43：更新 README（新 Schema、新 API、新功能說明）
 - [x] Step 44：更新 plan.md 補齊 Task 12-15
-- [ ] Step 45：Commit + push → **Commit**
+- [x] Step 45：Commit + push → **Commit**
