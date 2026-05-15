@@ -25,6 +25,9 @@ frontend/.env.*
 .DS_Store
 Thumbs.db
 
+# Database
+backend/weekly.db
+
 # Temp
 *.pptx
 *.tmp
