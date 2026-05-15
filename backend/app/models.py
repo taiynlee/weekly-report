@@ -69,6 +69,11 @@ class Highlight(Base):
     kpi_id: Mapped[int] = mapped_column(ForeignKey("kpis.id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="not_started")
+    llm_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    video_path: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     kpi: Mapped["KPI"] = relationship(back_populates="highlights")
 
@@ -80,5 +85,10 @@ class Lowlight(Base):
     kpi_id: Mapped[int] = mapped_column(ForeignKey("kpis.id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
+    status: Mapped[str] = mapped_column(String(20), default="not_started")
+    llm_prompt: Mapped[str | None] = mapped_column(Text, nullable=True)
+    link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    image_path: Mapped[str | None] = mapped_column(Text, nullable=True)
+    video_path: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     kpi: Mapped["KPI"] = relationship(back_populates="lowlights")

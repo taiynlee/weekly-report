@@ -49,7 +49,7 @@
 - [x] Step 26：建立 `frontend/src/components/TrendChart.tsx`
 - [x] Step 27：在 KpiDetail 底部加入 TrendChart → **Commit**
 
-## Task 10：前端 — Admin Panel
+## Task 10：前端 — Admin Panel（基礎版）
 - [x] Step 28：新增 Admin API methods（createWeek / updateKPI）
 - [x] Step 29：建立 `frontend/src/routes/admin/index.tsx`
 - [x] Step 30：在 `__root.tsx` Header 加入 Admin 連結 → **Commit**
@@ -58,3 +58,25 @@
 - [x] Step 31：確認 `weekly.db` 已在 `.gitignore`
 - [x] Step 32：移除舊的 `backend/app/data.py`
 - [x] Step 33：最終 commit → **Commit**
+
+---
+
+## Task 12：Admin 進階功能 — 項目層級編輯
+- [x] Step 34：Highlight / Lowlight 加欄位（status / llm_prompt / link / image_path / video_path）
+- [x] Step 35：Alembic migration（server_default 解決 SQLite NOT NULL 限制）
+- [x] Step 36：安裝 `anthropic` + `python-multipart`，更新 schemas.py → **Commit**
+
+## Task 13：Admin 後端新 API
+- [x] Step 37：admin.py 加 highlight/lowlight CRUD（POST/PUT/DELETE）
+- [x] Step 38：admin.py 加檔案上傳 endpoint（`/upload?field=image_path|video_path`）
+- [x] Step 39：admin.py 加 LLM 生成 endpoint（`/generate` → 呼叫 Claude Haiku）→ **Commit**
+
+## Task 14：Admin 前端改版
+- [x] Step 40：KPI 標題改為可編輯 input
+- [x] Step 41：KPI 層級移除狀態選擇器；狀態改為每個 highlight/lowlight 項目各自設定
+- [x] Step 42：每個項目加入 LLM Prompt、連結、圖片上傳、影片上傳欄位 → **Commit**
+
+## Task 15：文件同步
+- [x] Step 43：更新 README（新 Schema、新 API、新功能說明）
+- [x] Step 44：更新 plan.md 補齊 Task 12-15
+- [ ] Step 45：Commit + push → **Commit**

@@ -1,5 +1,5 @@
 import { CheckCircle2, AlertCircle, ChevronRight } from 'lucide-react'
-import type { KPI } from '../api/client'
+import type { KPI, HighlightItem, LowlightItem } from '../api/client'
 
 interface Props { kpi: KPI }
 

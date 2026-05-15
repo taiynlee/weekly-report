@@ -21,6 +21,11 @@ class HighlightOut(BaseModel):
     id: int
     content: str
     order_index: int
+    status: str
+    llm_prompt: str | None
+    link: str | None
+    image_path: str | None
+    video_path: str | None
     model_config = {"from_attributes": True}
 
 
@@ -28,6 +33,11 @@ class LowlightOut(BaseModel):
     id: int
     content: str
     order_index: int
+    status: str
+    llm_prompt: str | None
+    link: str | None
+    image_path: str | None
+    video_path: str | None
     model_config = {"from_attributes": True}
 
 
@@ -68,10 +78,19 @@ class SubKPIIn(BaseModel):
 
 class KPIUpdate(BaseModel):
     title: str | None = None
-    status: str | None = None
-    highlights: list[str] | None = None
-    lowlights: list[str] | None = None
     sub_kpis: list[SubKPIIn] | None = None
+
+
+class ItemUpdate(BaseModel):
+    content: str | None = None
+    status: str | None = None
+    llm_prompt: str | None = None
+    link: str | None = None
+
+
+class GenerateRequest(BaseModel):
+    prompt: str
+    context: str | None = None
 
 
 class TrendPoint(BaseModel):
