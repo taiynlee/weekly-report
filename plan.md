@@ -25,9 +25,9 @@
 - [x] Step 12：Commit `schemas.py`
 
 ## Task 5：Weeks 與 KPIs 讀取路由
-- [ ] Step 13：建立 `backend/app/routes/weeks.py`
-- [ ] Step 14：更新 `backend/app/routes/kpis.py` 改為查 DB
-- [ ] Step 15：更新 `backend/app/main.py` 掛上新 router → **Commit**
+- [x] Step 13：建立 `backend/app/routes/weeks.py`
+- [x] Step 14：更新 `backend/app/routes/kpis.py` 改為查 DB
+- [x] Step 15：更新 `backend/app/main.py` 掛上新 router → **Commit**
 
 ## Task 6：Admin 寫入路由
 - [ ] Step 16：建立 `backend/app/routes/admin.py`（POST /weeks、PUT /kpis/{id}）
