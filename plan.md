@@ -20,9 +20,9 @@
 - [x] Step 9：產生並執行第一次 migration，確認 tables 建立 → **Commit**
 
 ## Task 4：建立 Pydantic Schemas
-- [ ] Step 10：建立 `backend/app/schemas.py`（Out / Create / Update / TrendPoint）
-- [ ] Step 11：確認 schemas import 正常
-- [ ] Step 12：Commit `schemas.py`
+- [x] Step 10：建立 `backend/app/schemas.py`（Out / Create / Update / TrendPoint）
+- [x] Step 11：確認 schemas import 正常
+- [x] Step 12：Commit `schemas.py`
 
 ## Task 5：Weeks 與 KPIs 讀取路由
 - [ ] Step 13：建立 `backend/app/routes/weeks.py`
