@@ -40,9 +40,9 @@
 - [x] Step 21：確認資料正確 → **Commit**
 
 ## Task 8：前端 — 週份切換
-- [ ] Step 22：新增 `fetchWeeks` / `fetchKPIsByWeek` API client 方法
-- [ ] Step 23：建立 `frontend/src/components/WeekSelector.tsx`
-- [ ] Step 24：更新 `index.tsx` 加入 WeekSelector → **Commit**
+- [x] Step 22：新增 `fetchWeeks` / `fetchKPIsByWeek` API client 方法
+- [x] Step 23：建立 `frontend/src/components/WeekSelector.tsx`
+- [x] Step 24：更新 `index.tsx` 加入 WeekSelector → **Commit**
 
 ## Task 9：前端 — 跨週趨勢
 - [ ] Step 25：新增 `fetchTrend` API client 方法
