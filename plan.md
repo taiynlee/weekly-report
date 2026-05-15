@@ -55,6 +55,6 @@
 - [x] Step 30：在 `__root.tsx` Header 加入 Admin 連結 → **Commit**
 
 ## Task 11：清理與最終 Commit
-- [ ] Step 31：確認 `weekly.db` 已在 `.gitignore`
-- [ ] Step 32：移除舊的 `backend/app/data.py`
-- [ ] Step 33：最終 commit → **Commit**
+- [x] Step 31：確認 `weekly.db` 已在 `.gitignore`
+- [x] Step 32：移除舊的 `backend/app/data.py`
+- [x] Step 33：最終 commit → **Commit**
