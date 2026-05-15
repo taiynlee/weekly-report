@@ -30,9 +30,9 @@
 - [x] Step 15：更新 `backend/app/main.py` 掛上新 router → **Commit**
 
 ## Task 6：Admin 寫入路由
-- [ ] Step 16：建立 `backend/app/routes/admin.py`（POST /weeks、PUT /kpis/{id}）
-- [ ] Step 17：掛上 admin router
-- [ ] Step 18：手動測試 Admin API → **Commit**
+- [x] Step 16：建立 `backend/app/routes/admin.py`（POST /weeks、PUT /kpis/{id}）
+- [x] Step 17：掛上 admin router
+- [x] Step 18：手動測試 Admin API → **Commit**
 
 ## Task 7：資料庫 Seed
 - [ ] Step 19：建立 `backend/seed.py`，把 PPT 資料寫入 DB

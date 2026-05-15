@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routes.weeks import router as weeks_router
 from app.routes.kpis import router as kpis_router
+from app.routes.admin import router as admin_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -16,6 +17,7 @@ app.add_middleware(
 
 app.include_router(weeks_router)
 app.include_router(kpis_router)
+app.include_router(admin_router)
 
 
 @app.get("/health")
