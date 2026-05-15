@@ -35,9 +35,9 @@
 - [x] Step 18：手動測試 Admin API → **Commit**
 
 ## Task 7：資料庫 Seed
-- [ ] Step 19：建立 `backend/seed.py`，把 PPT 資料寫入 DB
-- [ ] Step 20：執行 seed
-- [ ] Step 21：確認資料正確 → **Commit**
+- [x] Step 19：建立 `backend/seed.py`，把 PPT 資料寫入 DB
+- [x] Step 20：執行 seed
+- [x] Step 21：確認資料正確 → **Commit**
 
 ## Task 8：前端 — 週份切換
 - [ ] Step 22：新增 `fetchWeeks` / `fetchKPIsByWeek` API client 方法
