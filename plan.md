@@ -45,9 +45,9 @@
 - [x] Step 24：更新 `index.tsx` 加入 WeekSelector → **Commit**
 
 ## Task 9：前端 — 跨週趨勢
-- [ ] Step 25：新增 `fetchTrend` API client 方法
-- [ ] Step 26：建立 `frontend/src/components/TrendChart.tsx`
-- [ ] Step 27：在 KpiDetail 底部加入 TrendChart → **Commit**
+- [x] Step 25：新增 `fetchTrend` API client 方法
+- [x] Step 26：建立 `frontend/src/components/TrendChart.tsx`
+- [x] Step 27：在 KpiDetail 底部加入 TrendChart → **Commit**
 
 ## Task 10：前端 — Admin Panel
 - [ ] Step 28：新增 Admin API methods（createWeek / updateKPI）
