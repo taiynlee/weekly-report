@@ -50,9 +50,9 @@
 - [x] Step 27：在 KpiDetail 底部加入 TrendChart → **Commit**
 
 ## Task 10：前端 — Admin Panel
-- [ ] Step 28：新增 Admin API methods（createWeek / updateKPI）
-- [ ] Step 29：建立 `frontend/src/routes/admin/index.tsx`
-- [ ] Step 30：在 `__root.tsx` Header 加入 Admin 連結 → **Commit**
+- [x] Step 28：新增 Admin API methods（createWeek / updateKPI）
+- [x] Step 29：建立 `frontend/src/routes/admin/index.tsx`
+- [x] Step 30：在 `__root.tsx` Header 加入 Admin 連結 → **Commit**
 
 ## Task 11：清理與最終 Commit
 - [ ] Step 31：確認 `weekly.db` 已在 `.gitignore`
