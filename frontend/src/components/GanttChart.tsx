@@ -95,7 +95,7 @@ export function GanttChart({ data, year }: Props) {
         {/* Task col header */}
         <div className={`${TASK_W} ${BORDER} px-2 py-1.5 bg-slate-50 dark:bg-slate-800
           flex items-center text-[9px] font-bold uppercase tracking-widest text-slate-400`}>
-          任務
+          Task
         </div>
         {/* Timeline month labels */}
         <div className="flex-1 relative h-8 bg-slate-50 dark:bg-slate-800">
@@ -111,8 +111,10 @@ export function GanttChart({ data, year }: Props) {
             </div>
           ))}
           {todayPct !== null && (
-            <div className="absolute top-0 h-full w-px bg-red-400 z-10 opacity-70"
-              style={{ left: `${todayPct}%` }} />
+            <div className="absolute top-0 h-full z-10 flex flex-col items-center"
+              style={{ left: `${todayPct}%`, transform: 'translateX(-50%)' }}>
+              <div className="w-0.5 h-full bg-red-500" />
+            </div>
           )}
         </div>
       </div>
@@ -140,8 +142,8 @@ export function GanttChart({ data, year }: Props) {
                 <div className="flex-1 relative h-8 bg-slate-50/50 dark:bg-slate-800/20">
                   <GridLines months={months} />
                   {todayPct !== null && (
-                    <div className="absolute top-0 h-full w-px bg-red-400/30 z-10"
-                      style={{ left: `${todayPct}%` }} />
+                    <div className="absolute top-0 h-full w-0.5 bg-red-500/50 z-10"
+                      style={{ left: `${todayPct}%`, transform: 'translateX(-50%)' }} />
                   )}
                 </div>
               </div>
@@ -179,18 +181,14 @@ export function GanttChart({ data, year }: Props) {
                         )}
                         <div
                           title={`${task.title}  ${task.start_date} – ${task.end_date}`}
-                          className="absolute top-1 bottom-1 rounded-md z-20
-                            flex items-center px-2 overflow-hidden
-                            text-[10px] font-semibold text-white"
+                          className="absolute top-1 bottom-1 rounded-md z-20"
                           style={{
                             left: `${left}%`,
                             width: `${Math.max(width, 0.3)}%`,
                             backgroundColor: barColor,
                             minWidth: '6px',
                           }}
-                        >
-                          {width > 5 && <span className="truncate">{task.title}</span>}
-                        </div>
+                        />
                       </div>
                     </div>
                   )
