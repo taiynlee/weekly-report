@@ -86,3 +86,16 @@ class HighlightMedia(Base):
     order_index: Mapped[int] = mapped_column(Integer, default=0)
 
     highlight: Mapped["Highlight"] = relationship(back_populates="media")
+
+
+class ScheduleTask(Base):
+    __tablename__ = "schedule_tasks"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    kpi_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(300), nullable=False)
+    start_date: Mapped[date] = mapped_column(Date, nullable=False)
+    end_date: Mapped[date] = mapped_column(Date, nullable=False)
+    color: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)

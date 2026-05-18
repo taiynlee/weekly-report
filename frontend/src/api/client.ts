@@ -44,3 +44,25 @@ export const uploadHighlightFile = (id: number, field: 'image' | 'video', file: 
 export const addHighlightLink    = (id: number, url: string) =>
   http.post<HighlightItem>(`/admin/highlights/${id}/links`, { url }).then(r => r.data)
 export const deleteHighlightMedia = (mediaId: number) => http.delete(`/admin/highlight-media/${mediaId}`)
+
+// ── Schedule ─────────────────────────────────────────────────────────────────
+export interface ScheduleTask {
+  id: number; year: number; kpi_number: number
+  title: string; start_date: string; end_date: string
+  color: string | null; order_index: number
+}
+export interface ScheduleByKpi {
+  kpi_number: number; kpi_title: string; tasks: ScheduleTask[]
+}
+export interface ScheduleTaskCreate {
+  year: number; kpi_number: number; title: string
+  start_date: string; end_date: string; color?: string; order_index?: number
+}
+export interface ScheduleTaskUpdate {
+  title?: string; start_date?: string; end_date?: string; color?: string; order_index?: number
+}
+
+export const fetchSchedule       = (year: number) => http.get<ScheduleByKpi[]>(`/schedule/${year}`).then(r => r.data)
+export const createScheduleTask  = (data: ScheduleTaskCreate) => http.post<ScheduleTask>('/admin/schedule', data).then(r => r.data)
+export const updateScheduleTask  = (id: number, data: ScheduleTaskUpdate) => http.put<ScheduleTask>(`/admin/schedule/${id}`, data).then(r => r.data)
+export const deleteScheduleTask  = (id: number) => http.delete(`/admin/schedule/${id}`)

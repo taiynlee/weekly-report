@@ -95,3 +95,39 @@ class GenerateRequest(BaseModel):
 class TrendPoint(BaseModel):
     week_date: date
     status: str
+
+
+class ScheduleTaskOut(BaseModel):
+    id: int
+    year: int
+    kpi_number: int
+    title: str
+    start_date: date
+    end_date: date
+    color: str | None
+    order_index: int
+    model_config = {"from_attributes": True}
+
+
+class ScheduleTaskCreate(BaseModel):
+    year: int
+    kpi_number: int
+    title: str
+    start_date: date
+    end_date: date
+    color: str | None = None
+    order_index: int = 0
+
+
+class ScheduleTaskUpdate(BaseModel):
+    title: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    color: str | None = None
+    order_index: int | None = None
+
+
+class ScheduleByKpi(BaseModel):
+    kpi_number: int
+    kpi_title: str
+    tasks: list[ScheduleTaskOut]

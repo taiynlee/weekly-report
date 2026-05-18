@@ -7,6 +7,7 @@ from app.config import settings
 from app.routes.weeks import router as weeks_router
 from app.routes.kpis import router as kpis_router
 from app.routes.admin import router as admin_router
+from app.routes.schedule import router as schedule_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -20,6 +21,7 @@ app.add_middleware(
 app.include_router(weeks_router)
 app.include_router(kpis_router)
 app.include_router(admin_router)
+app.include_router(schedule_router)
 
 UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)

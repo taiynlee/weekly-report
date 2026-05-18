@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import {
   Loader2, Plus, Trash2, Save, CheckCircle2, Sparkles,
   Link2, ImageIcon, VideoIcon, ChevronDown, ChevronUp,
-  ChevronLeft, ChevronRight, Clipboard, Target, Star,
+  ChevronLeft, ChevronRight, Clipboard, Target, Star, CalendarDays,
 } from 'lucide-react'
 import {
   fetchWeeks, fetchKPIsByWeek, fetchKPI,
@@ -12,6 +12,7 @@ import {
   uploadHighlightFile, addHighlightLink, deleteHighlightMedia,
   type Week, type KPIListItem, type KPI, type HighlightItem, type SubKPIIn,
 } from '../../api/client'
+import { ScheduleEditor } from '../../components/ScheduleEditor'
 
 export const Route = createFileRoute('/admin/')({ component: AdminPanel })
 
@@ -738,6 +739,7 @@ function WeekGrid({ yearWeeks, weekSet, selectedWeek, pendingCreate, creating, o
 // ── AdminPanel ────────────────────────────────────────────────────────────────
 
 function AdminPanel() {
+  const [adminTab, setAdminTab]         = useState<'kpi' | 'schedule'>('kpi')
   const [weeks, setWeeks]               = useState<Week[]>([])
   const [selectedWeek, setSelectedWeek] = useState('')
   const [tabs, setTabs]                 = useState<KPIListItem[]>([])
@@ -789,9 +791,38 @@ function AdminPanel() {
 
   return (
     <div className="space-y-5">
-      <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Admin Panel</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight">Admin Panel</h2>
+        {/* Admin mode switcher */}
+        <div className="flex gap-1 p-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800">
+          <button
+            onClick={() => setAdminTab('kpi')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              adminTab === 'kpi'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            KPI 管理
+          </button>
+          <button
+            onClick={() => setAdminTab('schedule')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              adminTab === 'schedule'
+                ? 'bg-blue-600 text-white'
+                : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Schedule
+          </button>
+        </div>
+      </div>
+
+      {adminTab === 'schedule' && <ScheduleEditor year={year} />}
 
       {/* Year week grid */}
+      {adminTab === 'kpi' && <>
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
         <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -875,6 +906,7 @@ function AdminPanel() {
           onSaved={() => fetchKPIsByWeek(selectedWeek).then(setTabs)}
         />
       )}
+      </>}
     </div>
   )
 }
