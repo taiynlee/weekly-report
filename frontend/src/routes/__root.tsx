@@ -16,8 +16,14 @@ function Layout() {
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2.5">
               <div className="flex gap-0.5 items-end h-6">
-                {[3,5,4,6,5].map((h,i) => (
-                  <div key={i} className="w-1.5 bg-blue-500 dark:bg-blue-400 rounded-sm" style={{ height: `${h * 4}px` }} />
+                {([
+                  [3, '#22d3ee'],
+                  [5, '#38bdf8'],
+                  [4, '#60a5fa'],
+                  [6, '#818cf8'],
+                  [5, '#a78bfa'],
+                ] as [number, string][]).map(([h, color], i) => (
+                  <div key={i} className="w-1.5 rounded-sm" style={{ height: `${h * 4}px`, backgroundColor: color }} />
                 ))}
               </div>
               <span className="font-bold text-base tracking-wide text-slate-800 dark:text-slate-100">

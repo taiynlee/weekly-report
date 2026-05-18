@@ -50,8 +50,6 @@ function toPlainText(highlights: HighlightItem[]): string {
   return highlights.map((h, i) => {
     let line = `${i + 1}. ${h.content}`
     if (h.percentage != null) line += ` (${h.percentage}%)`
-    const links = h.media.filter(m => m.media_type === 'link').map(m => m.url)
-    if (links.length) line += '\n   ' + links.join('\n   ')
     return line
   }).join('\n')
 }
