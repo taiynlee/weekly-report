@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Target, Star, ChevronRight, Link2, ImageIcon, VideoIcon, X, FileText, Copy, Check } from 'lucide-react'
+import { Target, Star, ChevronRight, Link2, ImageIcon, VideoIcon, X, FileText, Copy, Check, ZoomIn, ZoomOut } from 'lucide-react'
 import type { KPI, HighlightItem } from '../api/client'
 
 interface Props { kpi: KPI }
@@ -113,22 +113,42 @@ function ExportModal({ highlights, onClose }: { highlights: HighlightItem[]; onC
 }
 
 function MediaModal({ type, src, onClose }: { type: 'image' | 'video'; src: string; onClose: () => void }) {
+  const [scale, setScale] = useState(1)
+  const zoom = (delta: number) => setScale(s => Math.min(5, Math.max(0.25, +(s + delta).toFixed(2))))
+
   return (
-    <div
-      className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div className="relative max-w-4xl w-full" onClick={e => e.stopPropagation()}>
-        <button
-          onClick={onClose}
-          className="absolute -top-9 right-0 flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm"
-        >
+    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
+      {/* toolbar */}
+      <div className="flex items-center justify-end gap-3 px-4 py-2 flex-shrink-0">
+        <div className="flex items-center gap-1 bg-white/10 rounded-lg px-1.5 py-1">
+          <button onClick={() => zoom(-0.1)} title="縮小"
+            className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <span className="text-white/70 text-xs w-10 text-center select-none">{Math.round(scale * 100)}%</span>
+          <button onClick={() => zoom(0.1)} title="放大"
+            className="p-1 rounded text-white/70 hover:text-white hover:bg-white/10 transition-colors">
+            <ZoomIn className="w-4 h-4" />
+          </button>
+        </div>
+        <button onClick={onClose}
+          className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm">
           <X className="w-4 h-4" /> 關閉
         </button>
-        {type === 'image'
-          ? <img src={src} className="max-h-[85vh] max-w-full rounded-xl object-contain mx-auto block" />
-          : <video src={src} controls autoPlay className="max-h-[85vh] w-full rounded-xl" />
-        }
+      </div>
+
+      {/* scrollable content */}
+      <div className="flex-1 overflow-auto flex items-center justify-center p-4" onClick={onClose}>
+        <div
+          onClick={e => e.stopPropagation()}
+          className="flex-shrink-0 transition-all duration-150"
+          style={{ width: `${scale * 90}vw` }}
+        >
+          {type === 'image'
+            ? <img src={src} className="w-full h-auto rounded-xl block" />
+            : <video src={src} controls autoPlay className="w-full rounded-xl" />
+          }
+        </div>
       </div>
     </div>
   )

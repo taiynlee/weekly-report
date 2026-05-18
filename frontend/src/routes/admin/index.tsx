@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import {
   Loader2, Plus, Trash2, Save, CheckCircle2, Sparkles,
   Link2, ImageIcon, VideoIcon, ChevronDown, ChevronUp,
@@ -14,6 +14,26 @@ import {
 } from '../../api/client'
 
 export const Route = createFileRoute('/admin/')({ component: AdminPanel })
+
+function AutoTextarea({ value, onChange, className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  const ref = useRef<HTMLTextAreaElement>(null)
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.style.height = 'auto'
+      ref.current.style.height = ref.current.scrollHeight + 'px'
+    }
+  }, [value])
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={onChange}
+      rows={1}
+      className={`resize-none overflow-hidden ${className ?? ''}`}
+      {...props}
+    />
+  )
+}
 
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '未開始', dot: 'bg-slate-400', badge: 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400' },
@@ -41,8 +61,24 @@ function ItemEditor({
   const [generating, setGenerating] = useState(false)
   const [uploading, setUploading]   = useState<'image' | 'video' | null>(null)
   const [addingLink, setAddingLink] = useState(false)
-  const imageRef = useRef<HTMLInputElement>(null)
-  const videoRef = useRef<HTMLInputElement>(null)
+  const imageRef   = useRef<HTMLInputElement>(null)
+  const videoRef   = useRef<HTMLInputElement>(null)
+  const contentRef = useRef<HTMLTextAreaElement>(null)
+  const llmRef     = useRef<HTMLTextAreaElement>(null)
+
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.style.height = 'auto'
+      contentRef.current.style.height = contentRef.current.scrollHeight + 'px'
+    }
+  }, [content])
+
+  useEffect(() => {
+    if (llmRef.current) {
+      llmRef.current.style.height = 'auto'
+      llmRef.current.style.height = llmRef.current.scrollHeight + 'px'
+    }
+  }, [llmPrompt])
 
   const links  = item.media.filter(m => m.media_type === 'link')
   const images = item.media.filter(m => m.media_type === 'image')
@@ -186,13 +222,14 @@ function ItemEditor({
       <div className="p-3 space-y-3">
         {/* Content */}
         <textarea
+          ref={contentRef}
           value={content}
           onChange={e => setContent(e.target.value)}
           rows={2}
           placeholder="內容..."
           className="w-full text-sm px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700
             bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none overflow-hidden"
         />
 
         {expanded && (
@@ -204,13 +241,14 @@ function ItemEditor({
               </label>
               <div className="flex gap-2">
                 <textarea
+                  ref={llmRef}
                   value={llmPrompt}
                   onChange={e => setLlmPrompt(e.target.value)}
                   rows={2}
                   placeholder="輸入指令讓 Claude 更新內容..."
                   className="flex-1 text-sm px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700
                     bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200
-                    focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none"
+                    focus:outline-none focus:ring-2 focus:ring-purple-500 resize-none overflow-hidden"
                 />
                 <button
                   onClick={generate}
@@ -553,8 +591,8 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
                 {/* items */}
                 <div className="p-2 space-y-1.5">
                   {sub.items.map((item, ii) => (
-                    <div key={ii} className="flex items-center gap-1.5">
-                      <input
+                    <div key={ii} className="flex items-start gap-1.5">
+                      <AutoTextarea
                         value={item}
                         onChange={e => setItem(si, ii, e.target.value)}
                         placeholder="項目內容..."
