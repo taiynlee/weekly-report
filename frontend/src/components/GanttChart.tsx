@@ -73,6 +73,11 @@ function GridLines({ months }: { months: ReturnType<typeof getMonthOffsets> }) {
   )
 }
 
+// Fixed column widths
+const KPI_W  = 'w-24 flex-shrink-0'   // 96 px  — KPI group name
+const TASK_W = 'w-44 flex-shrink-0'   // 176 px — task name
+const BORDER = 'border-r border-slate-200 dark:border-slate-700'
+
 export function GanttChart({ data, year }: Props) {
   const months   = useMemo(() => getMonthOffsets(year), [year])
   const todayPct = useMemo(() => getTodayPct(year), [year])
@@ -81,8 +86,18 @@ export function GanttChart({ data, year }: Props) {
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
 
       {/* Month header */}
-      <div className="relative flex border-b border-slate-200 dark:border-slate-700">
-        <div className="w-36 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800" />
+      <div className="flex border-b border-slate-200 dark:border-slate-700">
+        {/* KPI col header */}
+        <div className={`${KPI_W} ${BORDER} px-2 py-1.5 bg-slate-50 dark:bg-slate-800
+          flex items-center text-[9px] font-bold uppercase tracking-widest text-slate-400`}>
+          KPI
+        </div>
+        {/* Task col header */}
+        <div className={`${TASK_W} ${BORDER} px-2 py-1.5 bg-slate-50 dark:bg-slate-800
+          flex items-center text-[9px] font-bold uppercase tracking-widest text-slate-400`}>
+          任務
+        </div>
+        {/* Timeline month labels */}
         <div className="flex-1 relative h-8 bg-slate-50 dark:bg-slate-800">
           {months.map(m => (
             <div
@@ -108,17 +123,20 @@ export function GanttChart({ data, year }: Props) {
           const color = KPI_COLORS[group.kpi_number] ?? '#60a5fa'
           return (
             <div key={group.kpi_number}>
-              {/* Group header */}
+
+              {/* Group header — KPI name spans both label cols */}
               <div className="flex items-stretch">
                 <div
-                  className="w-36 flex-shrink-0 px-3 py-2 flex items-center
+                  className={`${KPI_W} px-2 py-2 flex items-center ${BORDER}
                     bg-slate-50 dark:bg-slate-800/60
-                    border-r border-slate-200 dark:border-slate-700
-                    text-[11px] font-bold text-slate-700 dark:text-slate-300"
+                    text-[11px] font-bold text-slate-700 dark:text-slate-300`}
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
-                  <span className="truncate">{group.kpi_title.replace(/^\d+\.\s*/, '')}</span>
+                  <span className="truncate leading-tight">
+                    {group.kpi_title.replace(/^\d+\.\s*/, '')}
+                  </span>
                 </div>
+                <div className={`${TASK_W} ${BORDER} bg-slate-50 dark:bg-slate-800/60`} />
                 <div className="flex-1 relative h-8 bg-slate-50/50 dark:bg-slate-800/20">
                   <GridLines months={months} />
                   {todayPct !== null && (
@@ -131,10 +149,12 @@ export function GanttChart({ data, year }: Props) {
               {/* Tasks */}
               {group.tasks.length === 0 ? (
                 <div className="flex">
-                  <div className="w-36 flex-shrink-0 border-r border-slate-200 dark:border-slate-700 px-3 py-2" />
-                  <div className="flex-1 py-2 px-3">
+                  <div className={`${KPI_W} ${BORDER}`}
+                    style={{ borderLeft: `3px solid ${color}` }} />
+                  <div className={`${TASK_W} ${BORDER} px-2 py-2`}>
                     <span className="text-[11px] text-slate-400 italic">尚無排程任務</span>
                   </div>
+                  <div className="flex-1 py-2" />
                 </div>
               ) : (
                 group.tasks.map(task => {
@@ -142,11 +162,15 @@ export function GanttChart({ data, year }: Props) {
                   const barColor = task.color ?? color
                   return (
                     <div key={task.id} className="flex items-stretch">
-                      <div className="w-36 flex-shrink-0 px-3 py-1.5
-                        border-r border-slate-200 dark:border-slate-700
-                        text-[11px] text-slate-500 dark:text-slate-400 flex items-center">
+                      {/* KPI col — empty, keeps the color accent */}
+                      <div className={`${KPI_W} ${BORDER}`}
+                        style={{ borderLeft: `3px solid ${color}` }} />
+                      {/* Task name col */}
+                      <div className={`${TASK_W} ${BORDER} px-2 py-1.5
+                        text-[11px] text-slate-600 dark:text-slate-400 flex items-center`}>
                         <span className="truncate">{task.title}</span>
                       </div>
+                      {/* Timeline */}
                       <div className="flex-1 relative min-h-[30px] py-1">
                         <GridLines months={months} />
                         {todayPct !== null && (
