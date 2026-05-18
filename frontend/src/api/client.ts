@@ -3,7 +3,7 @@ import axios from 'axios'
 export interface SubKPIItem { id: number; content: string; order_index: number }
 export interface SubKPI { id: number; sub_id: string; title: string; items: SubKPIItem[] }
 
-export interface HighlightMedia { id: number; media_type: 'image' | 'video'; url: string; order_index: number }
+export interface HighlightMedia { id: number; media_type: 'image' | 'video' | 'link'; url: string; order_index: number }
 
 export interface HighlightItem {
   id: number; content: string; order_index: number; status: string
@@ -63,6 +63,9 @@ export interface ScheduleTaskUpdate {
 }
 
 export const fetchSchedule       = (year: number) => http.get<ScheduleByKpi[]>(`/schedule/${year}`).then(r => r.data)
+export const fetchScheduleYears  = () => http.get<number[]>('/schedule/years').then(r => r.data)
 export const createScheduleTask  = (data: ScheduleTaskCreate) => http.post<ScheduleTask>('/admin/schedule', data).then(r => r.data)
 export const updateScheduleTask  = (id: number, data: ScheduleTaskUpdate) => http.put<ScheduleTask>(`/admin/schedule/${id}`, data).then(r => r.data)
 export const deleteScheduleTask  = (id: number) => http.delete(`/admin/schedule/${id}`)
+export const copyScheduleYear    = (from_year: number, to_year: number) =>
+  http.post('/admin/schedule/copy-year', { from_year, to_year }).then(r => r.data)

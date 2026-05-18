@@ -10,9 +10,21 @@ import {
   createWeek, updateKPI,
   addHighlight, updateHighlight, deleteHighlight, generateHighlight,
   uploadHighlightFile, addHighlightLink, deleteHighlightMedia,
-  type Week, type KPIListItem, type KPI, type HighlightItem, type SubKPIIn,
+  fetchSchedule, fetchScheduleYears, copyScheduleYear,
+  createScheduleTask, updateScheduleTask, deleteScheduleTask,
+  type Week, type KPIListItem, type KPI, type HighlightItem, type SubKPIIn, type ScheduleTask,
 } from '../../api/client'
 import { ScheduleEditor } from '../../components/ScheduleEditor'
+
+// ── Schedule helpers (shared with ScheduleEditor) ─────────────────────────────
+const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+function toStartDate(y: number, m: number) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-01`
+}
+function toEndDate(y: number, m: number) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(new Date(y, m + 1, 0).getDate()).padStart(2, '0')}`
+}
+function toMonth(dateStr: string) { return new Date(dateStr).getMonth() }
 
 export const Route = createFileRoute('/admin/')({ component: AdminPanel })
 
@@ -36,8 +48,6 @@ function AutoTextarea({ value, onChange, className, ...props }: React.TextareaHT
   )
 }
 
-const TAB_COLORS = ['#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa']
-
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '未開始', dot: 'bg-slate-400', badge: 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400' },
   { value: 'in_progress', label: '進行中', dot: 'bg-blue-500',  badge: 'border-blue-400 text-blue-600 dark:border-blue-600 dark:text-blue-400' },
@@ -45,11 +55,10 @@ const STATUS_OPTIONS = [
 ]
 
 function ItemEditor({
-  item, kpiId,
+  item,
   onUpdate, onDelete,
 }: {
   item: HighlightItem
-  kpiId: number
   onUpdate: (updated: HighlightItem) => void
   onDelete: () => void
 }) {
@@ -424,7 +433,173 @@ function ItemEditor({
   )
 }
 
-function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void }) {
+// ── KPI Schedule Section (inline task editor per KPI) ────────────────────────
+
+function KpiScheduleTaskRow({ task, onUpdate, onDelete }: {
+  task: ScheduleTask
+  onUpdate: (id: number, title: string, sm: number, em: number) => Promise<void>
+  onDelete: (id: number) => Promise<void>
+}) {
+  const [editing, setEditing]   = useState(false)
+  const [title, setTitle]       = useState(task.title)
+  const [startM, setStartM]     = useState(toMonth(task.start_date))
+  const [endM, setEndM]         = useState(toMonth(task.end_date))
+  const [saving, setSaving]     = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  const save = async () => {
+    setSaving(true)
+    await onUpdate(task.id, title, startM, Math.max(endM, startM))
+    setSaving(false); setEditing(false)
+  }
+
+  if (!editing) return (
+    <div className="flex items-center gap-2 px-2 py-1 hover:bg-slate-50 dark:hover:bg-slate-800/50 group rounded">
+      <span className="flex-1 text-xs text-slate-700 dark:text-slate-300 truncate">{task.title}</span>
+      <span className="text-[10px] text-slate-400 tabular-nums flex-shrink-0">
+        {MONTH_NAMES[toMonth(task.start_date)]} – {MONTH_NAMES[toMonth(task.end_date)]}
+      </span>
+      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={() => setEditing(true)}
+          className="px-1.5 py-0.5 rounded text-[10px] border border-slate-200 dark:border-slate-700
+            text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+          編輯
+        </button>
+        <button onClick={() => { setDeleting(true); onDelete(task.id) }} disabled={deleting}
+          className="p-0.5 rounded text-slate-400 hover:text-rose-500 transition-colors">
+          {deleting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-50 dark:bg-slate-800/50 rounded">
+      <input value={title} onChange={e => setTitle(e.target.value)}
+        className="flex-1 text-xs px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700
+          bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200
+          focus:outline-none focus:ring-1 focus:ring-blue-500" />
+      <select value={startM} onChange={e => setStartM(+e.target.value)}
+        className="text-[10px] px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700
+          bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">
+        {MONTH_NAMES.map((n, i) => <option key={i} value={i}>{n}</option>)}
+      </select>
+      <span className="text-[10px] text-slate-400">–</span>
+      <select value={endM} onChange={e => setEndM(+e.target.value)}
+        className="text-[10px] px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700
+          bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">
+        {MONTH_NAMES.map((n, i) => <option key={i} value={i} disabled={i < startM}>{n}</option>)}
+      </select>
+      <button onClick={save} disabled={saving || !title.trim()}
+        className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold
+          bg-blue-600 text-white disabled:opacity-50">
+        {saving ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Save className="w-2.5 h-2.5" />}
+      </button>
+      <button onClick={() => setEditing(false)} className="text-[10px] text-slate-400 hover:text-slate-600 px-0.5">✕</button>
+    </div>
+  )
+}
+
+function KpiScheduleSection({ year, kpiNumber }: { year: number; kpiNumber: number }) {
+  const [tasks, setTasks]   = useState<ScheduleTask[]>([])
+  const [loading, setLoading] = useState(false)
+  const [addOpen, setAddOpen] = useState(false)
+  const [addTitle, setAddTitle] = useState('')
+  const [addStartM, setAddStartM] = useState(0)
+  const [addEndM, setAddEndM]   = useState(0)
+  const [adding, setAdding]     = useState(false)
+
+  const load = () => {
+    setLoading(true)
+    fetchSchedule(year)
+      .then(data => setTasks(data.find(g => g.kpi_number === kpiNumber)?.tasks ?? []))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [year, kpiNumber])
+
+  const handleUpdate = async (id: number, title: string, sm: number, em: number) => {
+    await updateScheduleTask(id, { title, start_date: toStartDate(year, sm), end_date: toEndDate(year, em) })
+    load()
+  }
+  const handleDelete = async (id: number) => {
+    await deleteScheduleTask(id); load()
+  }
+  const handleAdd = async () => {
+    if (!addTitle.trim()) return
+    setAdding(true)
+    await createScheduleTask({
+      year, kpi_number: kpiNumber,
+      title: addTitle.trim(),
+      start_date: toStartDate(year, addStartM),
+      end_date: toEndDate(year, Math.max(addEndM, addStartM)),
+    })
+    setAddTitle(''); setAddStartM(0); setAddEndM(0); setAddOpen(false); setAdding(false)
+    load()
+  }
+
+  return (
+    <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+      <div className="flex items-center gap-1.5 mb-2">
+        <CalendarDays className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+        <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">
+          Schedule {year}
+        </span>
+        <span className="ml-auto text-[10px] text-slate-400">{tasks.length} 個任務</span>
+      </div>
+      {loading ? (
+        <div className="flex justify-center py-2"><Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" /></div>
+      ) : (
+        <div className="space-y-0.5">
+          {tasks.map(task => (
+            <KpiScheduleTaskRow key={task.id} task={task}
+              onUpdate={handleUpdate} onDelete={handleDelete} />
+          ))}
+          {tasks.length === 0 && !addOpen && (
+            <p className="text-xs text-slate-400 italic px-2">尚無排程任務</p>
+          )}
+        </div>
+      )}
+      {addOpen ? (
+        <div className="flex items-center gap-1.5 mt-1.5 px-2 py-1.5 bg-emerald-50/50 dark:bg-emerald-950/20 rounded border border-emerald-100 dark:border-emerald-900">
+          <input autoFocus value={addTitle} onChange={e => setAddTitle(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            placeholder="任務名稱..."
+            className="flex-1 text-xs px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700
+              bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200
+              focus:outline-none focus:ring-1 focus:ring-emerald-500" />
+          <select value={addStartM}
+            onChange={e => { setAddStartM(+e.target.value); if (+e.target.value > addEndM) setAddEndM(+e.target.value) }}
+            className="text-[10px] px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700
+              bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">
+            {MONTH_NAMES.map((n, i) => <option key={i} value={i}>{n}</option>)}
+          </select>
+          <span className="text-[10px] text-slate-400">–</span>
+          <select value={addEndM} onChange={e => setAddEndM(+e.target.value)}
+            className="text-[10px] px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700
+              bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">
+            {MONTH_NAMES.map((n, i) => <option key={i} value={i} disabled={i < addStartM}>{n}</option>)}
+          </select>
+          <button onClick={handleAdd} disabled={adding || !addTitle.trim()}
+            className="flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold
+              bg-emerald-600 text-white disabled:opacity-50">
+            {adding ? <Loader2 className="w-2.5 h-2.5 animate-spin" /> : <Plus className="w-2.5 h-2.5" />}
+            新增
+          </button>
+          <button onClick={() => setAddOpen(false)} className="text-[10px] text-slate-400 hover:text-slate-600 px-0.5">取消</button>
+        </div>
+      ) : (
+        <button onClick={() => setAddOpen(true)}
+          className="flex items-center gap-1 mt-1.5 px-2 text-xs font-medium text-emerald-600 dark:text-emerald-400
+            hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors">
+          <Plus className="w-3 h-3" /> 新增任務
+        </button>
+      )}
+    </div>
+  )
+}
+
+function KpiEditCard({ kpiId, year, onSaved }: { kpiId: number; year: number; onSaved: () => void }) {
   const [kpi, setKpi]         = useState<KPI | null>(null)
   const [title, setTitle]     = useState('')
   const [kpiStatus, setKpiStatus] = useState('not_started')
@@ -643,7 +818,7 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
           <div className="space-y-2">
             {kpi.highlights.map(h => (
               <ItemEditor
-                key={h.id} item={h} kpiId={kpiId}
+                key={h.id} item={h}
                 onUpdate={updated => handleUpdateHighlight(h.id, updated)}
                 onDelete={() => handleDeleteHighlight(h.id)}
               />
@@ -652,6 +827,11 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
           </div>
         </div>
 
+      </div>
+
+      {/* Schedule tasks for this KPI */}
+      <div className="px-4 pb-4">
+        <KpiScheduleSection year={year} kpiNumber={kpi.number} />
       </div>
     </div>
   )
@@ -736,9 +916,61 @@ function WeekGrid({ yearWeeks, weekSet, selectedWeek, pendingCreate, creating, o
   )
 }
 
+// ── Schedule Year Grid ────────────────────────────────────────────────────────
+
+function ScheduleYearGrid({ selectedYear, yearsWithData, pendingYear, onSelect }: {
+  selectedYear: number | null
+  yearsWithData: number[]
+  pendingYear: number | null
+  onSelect: (y: number) => void
+}) {
+  const currentYear = new Date().getFullYear()
+  const yearSet = new Set(yearsWithData)
+  const years = Array.from({ length: 12 }, (_, i) => currentYear - 1 + i)
+
+  return (
+    <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+      <div className="px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">年份</span>
+        </div>
+        <div className="flex items-center gap-2 text-[10px] text-slate-400">
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-blue-200 dark:bg-blue-800" />有資料</span>
+          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-sm bg-slate-200 dark:bg-slate-700" />未建立</span>
+        </div>
+      </div>
+      <div className="px-4 py-3 flex gap-1.5 flex-wrap">
+        {years.map(y => {
+          const hasData  = yearSet.has(y)
+          const isSel    = y === selectedYear
+          const isPending = y === pendingYear
+          return (
+            <button key={y} onClick={() => onSelect(y)}
+              title={y === currentYear ? '本年度' : ''}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+                isSel
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : isPending
+                    ? 'bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 ring-2 ring-amber-400'
+                    : hasData
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-800'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
+              } ${y === currentYear && !isSel && !isPending ? 'ring-2 ring-sky-400' : ''}`}
+            >
+              {y}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ── AdminPanel ────────────────────────────────────────────────────────────────
 
 function AdminPanel() {
+  const currentYear = new Date().getFullYear()
+
   const [adminTab, setAdminTab]         = useState<'kpi' | 'schedule'>('kpi')
   const [weeks, setWeeks]               = useState<Week[]>([])
   const [selectedWeek, setSelectedWeek] = useState('')
@@ -746,10 +978,18 @@ function AdminPanel() {
   const [activeKpiId, setActiveKpiId]   = useState<number | null>(null)
   const [pendingCreate, setPendingCreate] = useState<string | null>(null)
   const [creating, setCreating]         = useState(false)
-  const [year, setYear]                 = useState(new Date().getFullYear())
+  const [year, setYear]                 = useState(currentYear)
+
+  // Schedule year state
+  const [scheduleYear, setScheduleYear]         = useState<number | null>(null)
+  const [scheduleYears, setScheduleYears]       = useState<number[]>([])
+  const [pendingCreateYear, setPendingCreateYear] = useState<number | null>(null)
+  const [creatingYear, setCreatingYear]         = useState(false)
 
   const yearWeeks = getYearMondays(year)
   const weekSet   = new Set(weeks.map(w => w.week_date))
+
+  const kpiYear = selectedWeek ? parseInt(selectedWeek.slice(0, 4)) : currentYear
 
   const loadWeeks = () =>
     fetchWeeks().then(list => {
@@ -757,7 +997,19 @@ function AdminPanel() {
       if (list.length > 0 && !selectedWeek) setSelectedWeek(list[0].week_date)
     })
 
+  const loadScheduleYears = () =>
+    fetchScheduleYears().then(years => {
+      setScheduleYears(years)
+      if (scheduleYear === null && years.includes(currentYear)) {
+        setScheduleYear(currentYear)
+      }
+    })
+
   useEffect(() => { loadWeeks() }, [])
+
+  useEffect(() => {
+    if (adminTab === 'schedule') loadScheduleYears()
+  }, [adminTab])
 
   useEffect(() => {
     if (!selectedWeek) return
@@ -776,6 +1028,15 @@ function AdminPanel() {
     }
   }
 
+  const handleSelectYear = (y: number) => {
+    if (scheduleYears.includes(y)) {
+      setScheduleYear(y)
+      setPendingCreateYear(null)
+    } else {
+      setPendingCreateYear(y)
+    }
+  }
+
   const handleConfirmCreate = async () => {
     if (!pendingCreate) return
     setCreating(true)
@@ -788,6 +1049,27 @@ function AdminPanel() {
       setCreating(false)
     }
   }
+
+  const handleConfirmCreateYear = async () => {
+    if (!pendingCreateYear) return
+    setCreatingYear(true)
+    try {
+      const prevYears = scheduleYears.filter(y => y < pendingCreateYear)
+      if (prevYears.length > 0) {
+        const fromYear = Math.max(...prevYears)
+        await copyScheduleYear(fromYear, pendingCreateYear)
+        await loadScheduleYears()
+      }
+      setScheduleYear(pendingCreateYear)
+      setPendingCreateYear(null)
+    } finally {
+      setCreatingYear(false)
+    }
+  }
+
+  const prevYearToCopy = pendingCreateYear
+    ? Math.max(...scheduleYears.filter(y => y < pendingCreateYear), -Infinity)
+    : -Infinity
 
   return (
     <div className="space-y-5">
@@ -819,7 +1101,38 @@ function AdminPanel() {
         </div>
       </div>
 
-      {adminTab === 'schedule' && <ScheduleEditor year={year} />}
+      {adminTab === 'schedule' && (
+        <div className="space-y-4">
+          <ScheduleYearGrid
+            selectedYear={scheduleYear}
+            yearsWithData={scheduleYears}
+            pendingYear={pendingCreateYear}
+            onSelect={handleSelectYear}
+          />
+          {pendingCreateYear && (
+            <div className="flex items-center gap-3 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+              <span className="text-xs text-amber-700 dark:text-amber-300 flex-1">
+                建立 <strong>{pendingCreateYear}</strong> 年份計劃
+                {prevYearToCopy > 0
+                  ? <>並複製 <strong>{prevYearToCopy}</strong> 年資料</>
+                  : '（空白年份）'
+                }？
+              </span>
+              <button onClick={handleConfirmCreateYear} disabled={creatingYear}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold
+                  bg-amber-500 hover:bg-amber-600 text-white disabled:opacity-50 transition-colors">
+                {creatingYear ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                確認建立
+              </button>
+              <button onClick={() => setPendingCreateYear(null)}
+                className="text-xs text-amber-600 dark:text-amber-400 hover:underline">
+                取消
+              </button>
+            </div>
+          )}
+          {scheduleYear && <ScheduleEditor year={scheduleYear} />}
+        </div>
+      )}
 
       {/* Year week grid */}
       {adminTab === 'kpi' && <>
@@ -903,6 +1216,7 @@ function AdminPanel() {
         <KpiEditCard
           key={activeKpiId}
           kpiId={activeKpiId}
+          year={kpiYear}
           onSaved={() => fetchKPIsByWeek(selectedWeek).then(setTabs)}
         />
       )}

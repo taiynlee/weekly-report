@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app import models
-from app.schemas import ScheduleTaskOut, ScheduleTaskCreate, ScheduleTaskUpdate, ScheduleByKpi
+from sqlalchemy import distinct
+from app.schemas import ScheduleTaskOut, ScheduleTaskCreate, ScheduleTaskUpdate, ScheduleByKpi, CopyYearRequest
 
 router = APIRouter(prefix="/api", tags=["schedule"])
 
@@ -14,6 +15,32 @@ KPI_TITLES = [
     "4. Organization (賦能平台 3.0)",
     "5. People",
 ]
+
+
+@router.get("/schedule/years", response_model=list[int])
+def get_schedule_years(db: Session = Depends(get_db)):
+    rows = db.query(distinct(models.ScheduleTask.year)).order_by(models.ScheduleTask.year).all()
+    return [r[0] for r in rows]
+
+
+@router.post("/admin/schedule/copy-year", status_code=200)
+def copy_schedule_year(body: CopyYearRequest, db: Session = Depends(get_db)):
+    existing = db.query(models.ScheduleTask).filter(models.ScheduleTask.year == body.to_year).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Year already has tasks")
+    tasks = db.query(models.ScheduleTask).filter(models.ScheduleTask.year == body.from_year).all()
+    for t in tasks:
+        db.add(models.ScheduleTask(
+            year=body.to_year,
+            kpi_number=t.kpi_number,
+            title=t.title,
+            start_date=t.start_date.replace(year=body.to_year),
+            end_date=t.end_date.replace(year=body.to_year),
+            color=t.color,
+            order_index=t.order_index,
+        ))
+    db.commit()
+    return {"copied": len(tasks)}
 
 
 @router.get("/schedule/{year}", response_model=list[ScheduleByKpi])

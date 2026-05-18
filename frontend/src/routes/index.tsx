@@ -17,8 +17,6 @@ const STATUS_BAR = {
   not_started: 'bg-slate-300 dark:bg-slate-600',
 }
 
-const TAB_COLORS = ['#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa']
-
 function Dashboard() {
   const [weeks, setWeeks]               = useState<Week[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>('')

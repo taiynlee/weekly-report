@@ -23,11 +23,10 @@ function toMonth(dateStr: string) {
 
 interface TaskRowProps {
   task: ScheduleTask
-  year: number
   onUpdate: (id: number, title: string, sm: number, em: number) => Promise<void>
   onDelete: (id: number) => Promise<void>
 }
-function TaskRow({ task, year, onUpdate, onDelete }: TaskRowProps) {
+function TaskRow({ task, onUpdate, onDelete }: TaskRowProps) {
   const [editing, setEditing]   = useState(false)
   const [title, setTitle]       = useState(task.title)
   const [startM, setStartM]     = useState(toMonth(task.start_date))
@@ -103,10 +102,9 @@ function TaskRow({ task, year, onUpdate, onDelete }: TaskRowProps) {
 }
 
 interface AddFormProps {
-  year: number
   onCreate: (title: string, sm: number, em: number) => Promise<void>
 }
-function AddForm({ year, onCreate }: AddFormProps) {
+function AddForm({ onCreate }: AddFormProps) {
   const [open, setOpen]     = useState(false)
   const [title, setTitle]   = useState('')
   const [startM, setStartM] = useState(0)
@@ -215,11 +213,11 @@ export function ScheduleEditor({ year }: { year: number }) {
             </div>
             <div className="divide-y divide-slate-100 dark:divide-slate-800">
               {group.tasks.map(task => (
-                <TaskRow key={task.id} task={task} year={year}
+                <TaskRow key={task.id} task={task}
                   onUpdate={handleUpdate} onDelete={handleDelete} />
               ))}
             </div>
-            <AddForm year={year} onCreate={(title, sm, em) => handleCreate(group.kpi_number, title, sm, em)} />
+            <AddForm onCreate={(title, sm, em) => handleCreate(group.kpi_number, title, sm, em)} />
           </div>
         )
       })}

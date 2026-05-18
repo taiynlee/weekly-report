@@ -131,3 +131,8 @@ class ScheduleByKpi(BaseModel):
     kpi_number: int
     kpi_title: str
     tasks: list[ScheduleTaskOut]
+
+
+class CopyYearRequest(BaseModel):
+    from_year: int
+    to_year: int
