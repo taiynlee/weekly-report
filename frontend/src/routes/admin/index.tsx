@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
-import React, { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Loader2, Plus, Trash2, Save, CheckCircle2, Sparkles,
   Link2, ImageIcon, VideoIcon, ChevronDown, ChevronUp,
-  ChevronLeft, ChevronRight, Clipboard, Target, Star, CalendarDays,
+  ChevronLeft, ChevronRight, Clipboard, Star, CalendarDays,
 } from 'lucide-react'
 import {
   fetchWeeks, fetchKPIsByWeek, fetchKPI,
@@ -12,7 +12,7 @@ import {
   uploadHighlightFile, addHighlightLink, deleteHighlightMedia,
   fetchSchedule, fetchScheduleYears, copyScheduleYear,
   createScheduleTask, updateScheduleTask, deleteScheduleTask,
-  type Week, type KPIListItem, type KPI, type HighlightItem, type SubKPIIn, type ScheduleTask,
+  type Week, type KPIListItem, type KPI, type HighlightItem, type ScheduleTask,
 } from '../../api/client'
 import { ScheduleEditor } from '../../components/ScheduleEditor'
 
@@ -28,25 +28,6 @@ function toMonth(dateStr: string) { return new Date(dateStr).getMonth() }
 
 export const Route = createFileRoute('/admin/')({ component: AdminPanel })
 
-function AutoTextarea({ value, onChange, className, ...props }: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  const ref = useRef<HTMLTextAreaElement>(null)
-  useEffect(() => {
-    if (ref.current) {
-      ref.current.style.height = 'auto'
-      ref.current.style.height = ref.current.scrollHeight + 'px'
-    }
-  }, [value])
-  return (
-    <textarea
-      ref={ref}
-      value={value}
-      onChange={onChange}
-      rows={1}
-      className={`resize-none overflow-hidden ${className ?? ''}`}
-      {...props}
-    />
-  )
-}
 
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '未開始', dot: 'bg-slate-400', badge: 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400' },
@@ -605,19 +586,11 @@ function KpiEditCard({ kpiId, year, onSaved }: { kpiId: number; year: number; on
   const [kpiStatus, setKpiStatus] = useState('not_started')
   const [savingTitle, setSavingTitle] = useState(false)
   const [titleSaved, setTitleSaved]   = useState(false)
-  const [subKpis, setSubKpis] = useState<SubKPIIn[]>([])
-  const [savingSubs, setSavingSubs] = useState(false)
-  const [subsSaved, setSubsSaved]   = useState(false)
 
   const reload = () => fetchKPI(kpiId).then(data => {
     setKpi(data)
     setTitle(data.title)
     setKpiStatus(data.status)
-    setSubKpis(data.sub_kpis.map(s => ({
-      sub_id: s.sub_id,
-      title: s.title,
-      items: [...s.items].sort((a, b) => a.order_index - b.order_index).map(i => i.content),
-    })))
   })
 
   useEffect(() => { reload() }, [kpiId])
@@ -630,21 +603,6 @@ function KpiEditCard({ kpiId, year, onSaved }: { kpiId: number; year: number; on
       onSaved()
     } finally { setSavingTitle(false) }
   }
-
-  const saveSubs = async () => {
-    setSavingSubs(true)
-    try {
-      await updateKPI(kpiId, { sub_kpis: subKpis })
-      setSubsSaved(true); setTimeout(() => setSubsSaved(false), 2000)
-      reload()
-    } finally { setSavingSubs(false) }
-  }
-
-  const setSub = (i: number, patch: Partial<SubKPIIn>) =>
-    setSubKpis(prev => prev.map((s, idx) => idx === i ? { ...s, ...patch } : s))
-
-  const setItem = (si: number, ii: number, val: string) =>
-    setSub(si, { items: subKpis[si].items.map((x, j) => j === ii ? val : x) })
 
   const handleUpdateHighlight = (id: number, updated: HighlightItem) => {
     setKpi(prev => prev ? { ...prev, highlights: prev.highlights.map(x => x.id === id ? updated : x) } : prev)
@@ -710,93 +668,13 @@ function KpiEditCard({ kpiId, year, onSaved }: { kpiId: number; year: number; on
 
       <div className="p-4 grid grid-cols-1 lg:grid-cols-5 gap-6">
 
-        {/* Sub KPI editor — 2/5 */}
+        {/* 年度計劃 tasks — 2/5 (synced with 年度計劃管理) */}
         <div className="lg:col-span-2">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-blue-500 flex-shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">KPI 指標</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setSubKpis(s => [...s, { sub_id: '', title: '', items: [] }])}
-                className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded border
-                  border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400
-                  hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors"
-              >
-                <Plus className="w-3 h-3" /> 新增
-              </button>
-              <button
-                onClick={saveSubs}
-                disabled={savingSubs}
-                className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-semibold
-                  bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 transition-colors"
-              >
-                {savingSubs ? <Loader2 className="w-3 h-3 animate-spin" /> : subsSaved ? <CheckCircle2 className="w-3 h-3" /> : <Save className="w-3 h-3" />}
-                {subsSaved ? '已存' : '儲存'}
-              </button>
-            </div>
+          <div className="flex items-center gap-1.5 mb-3">
+            <CalendarDays className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">年度計劃</span>
           </div>
-
-          <div className="space-y-3">
-            {subKpis.map((sub, si) => (
-              <div key={si} className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
-                {/* sub header */}
-                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800">
-                  <input
-                    value={sub.sub_id}
-                    onChange={e => setSub(si, { sub_id: e.target.value })}
-                    placeholder="1.1"
-                    className="w-14 text-sm px-1.5 py-1 rounded border border-slate-200 dark:border-slate-700
-                      bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200
-                      focus:outline-none focus:ring-1 focus:ring-blue-500 text-center"
-                  />
-                  <input
-                    value={sub.title}
-                    onChange={e => setSub(si, { title: e.target.value })}
-                    placeholder="指標標題..."
-                    className="flex-1 text-sm px-2 py-1 rounded border border-slate-200 dark:border-slate-700
-                      bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200
-                      focus:outline-none focus:ring-1 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={() => setSubKpis(s => s.filter((_, i) => i !== si))}
-                    className="p-1 rounded text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950 transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                {/* items */}
-                <div className="p-2 space-y-1.5">
-                  {sub.items.map((item, ii) => (
-                    <div key={ii} className="flex items-start gap-1.5">
-                      <AutoTextarea
-                        value={item}
-                        onChange={e => setItem(si, ii, e.target.value)}
-                        placeholder="項目內容..."
-                        className="flex-1 text-sm px-2 py-1 rounded border border-slate-200 dark:border-slate-700
-                          bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200
-                          focus:outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                      <button
-                        onClick={() => setSub(si, { items: sub.items.filter((_, j) => j !== ii) })}
-                        className="p-1 rounded text-slate-300 hover:text-rose-500 transition-colors flex-shrink-0"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  ))}
-                  <button
-                    onClick={() => setSub(si, { items: [...sub.items, ''] })}
-                    className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-blue-500 transition-colors"
-                  >
-                    <Plus className="w-3 h-3" /> 新增項目
-                  </button>
-                </div>
-              </div>
-            ))}
-            {subKpis.length === 0 && <p className="text-xs text-slate-400 italic">無指標</p>}
-          </div>
+          <KpiScheduleSection year={year} kpiNumber={kpi.number} />
         </div>
 
         {/* Highlights editor — 3/5 */}
@@ -827,11 +705,6 @@ function KpiEditCard({ kpiId, year, onSaved }: { kpiId: number; year: number; on
           </div>
         </div>
 
-      </div>
-
-      {/* Schedule tasks for this KPI */}
-      <div className="px-4 pb-4">
-        <KpiScheduleSection year={year} kpiNumber={kpi.number} />
       </div>
     </div>
   )
@@ -926,7 +799,7 @@ function ScheduleYearGrid({ selectedYear, yearsWithData, pendingYear, onSelect }
 }) {
   const currentYear = new Date().getFullYear()
   const yearSet = new Set(yearsWithData)
-  const years = Array.from({ length: 12 }, (_, i) => currentYear - 1 + i)
+  const years = Array.from({ length: 10 }, (_, i) => currentYear + i)
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden">
