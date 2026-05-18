@@ -1096,7 +1096,7 @@ function AdminPanel() {
             }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
-            Schedule
+            年度計劃管理
           </button>
         </div>
       </div>
