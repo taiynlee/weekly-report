@@ -35,6 +35,8 @@ function AutoTextarea({ value, onChange, className, ...props }: React.TextareaHT
   )
 }
 
+const TAB_COLORS = ['#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa']
+
 const STATUS_OPTIONS = [
   { value: 'not_started', label: '未開始', dot: 'bg-slate-400', badge: 'border-slate-300 text-slate-500 dark:border-slate-600 dark:text-slate-400' },
   { value: 'in_progress', label: '進行中', dot: 'bg-blue-500',  badge: 'border-blue-400 text-blue-600 dark:border-blue-600 dark:text-blue-400' },
@@ -135,7 +137,7 @@ function ItemEditor({
     <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
       {/* Item header */}
       <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 dark:bg-slate-800">
-        <span className="flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950 border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400">
+        <span className="flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400">
           {item.order_index + 1}
         </span>
 
@@ -543,8 +545,8 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
               <button
                 onClick={() => setSubKpis(s => [...s, { sub_id: '', title: '', items: [] }])}
                 className="flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded border
-                  border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400
-                  hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                  border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400
+                  hover:bg-emerald-50 dark:hover:bg-emerald-950 transition-colors"
               >
                 <Plus className="w-3 h-3" /> 新增
               </button>
@@ -626,7 +628,7 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-1.5">
               <Star className="w-4 h-4 text-amber-400 fill-amber-400 flex-shrink-0" />
-              <span className="text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Highlight</span>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">Highlight</span>
             </div>
             <button
               onClick={handleAddHighlight}

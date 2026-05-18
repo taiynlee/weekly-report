@@ -13,6 +13,8 @@ const STATUS_BAR = {
   not_started: 'bg-slate-300 dark:bg-slate-600',
 }
 
+const TAB_COLORS = ['#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa']
+
 function Dashboard() {
   const [weeks, setWeeks]         = useState<Week[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>('')
@@ -77,7 +79,6 @@ function Dashboard() {
               >
                 <span className="block text-[10px] font-bold opacity-60 mb-0.5">{tabNumber(tab.title)}</span>
                 <span className="block truncate">{shortTitle(tab.title)}</span>
-                {/* status bar at bottom */}
                 <span className={`absolute bottom-0 left-2 right-2 h-0.5 rounded-full ${active ? 'bg-white/40' : barColor}`} />
               </button>
             )

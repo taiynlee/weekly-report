@@ -113,8 +113,18 @@ function ExportModal({ highlights, onClose }: { highlights: HighlightItem[]; onC
 }
 
 function MediaModal({ type, src, onClose }: { type: 'image' | 'video'; src: string; onClose: () => void }) {
-  const [scale, setScale] = useState(1)
+  const [scale, setScale]     = useState(1)
+  const [fittedW, setFittedW] = useState<number | null>(null)
   const zoom = (delta: number) => setScale(s => Math.min(5, Math.max(0.25, +(s + delta).toFixed(2))))
+
+  const onImgLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: nw, naturalHeight: nh } = e.currentTarget
+    const maxW = window.innerWidth  * 0.9
+    const maxH = window.innerHeight * 0.85
+    setFittedW(Math.min(nw, maxW, maxH * nw / nh))
+  }
+
+  const imgWidth = fittedW != null ? fittedW * scale : undefined
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex flex-col">
@@ -139,14 +149,16 @@ function MediaModal({ type, src, onClose }: { type: 'image' | 'video'; src: stri
 
       {/* scrollable content */}
       <div className="flex-1 overflow-auto flex items-center justify-center p-4" onClick={onClose}>
-        <div
-          onClick={e => e.stopPropagation()}
-          className="flex-shrink-0 transition-all duration-150"
-          style={{ width: `${scale * 90}vw` }}
-        >
+        <div onClick={e => e.stopPropagation()} className="flex-shrink-0">
           {type === 'image'
-            ? <img src={src} className="w-full h-auto rounded-xl block" />
-            : <video src={src} controls autoPlay className="w-full rounded-xl" />
+            ? <img
+                src={src}
+                onLoad={onImgLoad}
+                className="h-auto rounded-xl block transition-all duration-150"
+                style={{ width: imgWidth }}
+              />
+            : <video src={src} controls autoPlay className="rounded-xl transition-all duration-150"
+                style={{ width: `${scale * 90}vw` }} />
           }
         </div>
       </div>
@@ -238,7 +250,7 @@ export function KpiDetail({ kpi }: Props) {
           <ul className="divide-y divide-slate-100 dark:divide-slate-800">
             {kpi.highlights.map((h, i) => (
               <li key={h.id} className="flex items-center gap-3 px-4 py-2.5">
-                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-950 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                <span className="flex-shrink-0 w-5 h-5 rounded-full bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-[10px] font-bold text-blue-600 dark:text-blue-400">
                   {i + 1}
                 </span>
                 <span className="flex-1 min-w-0 text-sm font-medium text-slate-800 dark:text-slate-200 leading-snug whitespace-pre-wrap">{h.content}</span>
