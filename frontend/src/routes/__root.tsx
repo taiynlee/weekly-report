@@ -1,5 +1,5 @@
 import { createRootRoute, Outlet, Link, useLocation } from '@tanstack/react-router'
-import { Sun, Moon, Settings } from 'lucide-react'
+import { Sun, Moon, Settings, LayoutDashboard } from 'lucide-react'
 import { useTheme } from '../hooks/useTheme'
 
 function Layout() {
@@ -34,13 +34,14 @@ function Layout() {
             <nav className="flex items-center gap-1 text-sm">
               <Link
                 to="/"
-                className={`px-3 py-1.5 rounded-md font-medium transition-colors ${
+                className={`px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
                   !isAdmin
                     ? 'bg-blue-600 text-white'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
                 }`}
               >
-                Dashboard
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                Frontend
               </Link>
               <Link
                 to="/admin"
@@ -51,7 +52,7 @@ function Layout() {
                 }`}
               >
                 <Settings className="w-3.5 h-3.5" />
-                Admin
+                Backend
               </Link>
             </nav>
           </div>

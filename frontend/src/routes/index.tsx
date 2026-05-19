@@ -2,8 +2,8 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Loader2, CalendarDays } from 'lucide-react'
 import {
-  fetchWeeks, fetchKPIsByWeek, fetchKPI, fetchSchedule,
-  type Week, type KPIListItem, type KPI, type ScheduleByKpi,
+  fetchWeeks, fetchKPIsByWeek, fetchKPI, fetchAnnualPlan,
+  type Week, type KPIListItem, type KPI, type AnnualPlanKpi,
 } from '../api/client'
 import { WeekSelector } from '../components/WeekSelector'
 import { KpiDetail } from '../components/KpiDetail'
@@ -18,17 +18,18 @@ const STATUS_BAR = {
 }
 
 function Dashboard() {
+  const year = new Date().getFullYear()
+
   const [weeks, setWeeks]               = useState<Week[]>([])
   const [selectedWeek, setSelectedWeek] = useState<string>('')
   const [tabs, setTabs]                 = useState<KPIListItem[]>([])
   const [activeTab, setActiveTab]       = useState<'schedule' | number>('schedule')
   const [kpi, setKpi]                   = useState<KPI | null>(null)
-  const [scheduleData, setScheduleData] = useState<ScheduleByKpi[]>([])
+  const [annualPlanData, setAnnualPlanData] = useState<AnnualPlanKpi[]>([])
+  const [annualPlanYear, setAnnualPlanYear] = useState<number>(year)
   const [loadingList, setLoadingList]   = useState(false)
   const [loadingKpi, setLoadingKpi]     = useState(false)
   const [loadingSchedule, setLoadingSchedule] = useState(false)
-
-  const year = new Date().getFullYear()
 
   // load weeks
   useEffect(() => {
@@ -57,11 +58,20 @@ function Dashboard() {
     fetchKPI(activeTab as number).then(setKpi).finally(() => setLoadingKpi(false))
   }, [activeTab])
 
-  // load schedule when schedule tab is active
+  // load annual plan when schedule tab is active; fall back to prior year if no data
   useEffect(() => {
     if (activeTab !== 'schedule') return
     setLoadingSchedule(true)
-    fetchSchedule(year).then(setScheduleData).finally(() => setLoadingSchedule(false))
+    fetchAnnualPlan(year).then(async data => {
+      if (data.length === 0) {
+        const prev = await fetchAnnualPlan(year - 1)
+        setAnnualPlanData(prev)
+        setAnnualPlanYear(prev.length > 0 ? year - 1 : year)
+      } else {
+        setAnnualPlanData(data)
+        setAnnualPlanYear(year)
+      }
+    }).finally(() => setLoadingSchedule(false))
   }, [activeTab])
 
   const shortTitle = (title: string) => title.replace(/^\d+\.\s*/, '').split('(')[0].trim()
@@ -83,13 +93,13 @@ function Dashboard() {
           {/* Schedule tab — leftmost */}
           <button
             onClick={() => setActiveTab('schedule')}
-            className={`flex items-center gap-1.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all flex-shrink-0 ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap overflow-hidden ${
               activeTab === 'schedule'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
-            <CalendarDays className="w-3.5 h-3.5" />
+            <CalendarDays className="w-3.5 h-3.5 flex-shrink-0" />
             年度計劃
           </button>
 
@@ -101,14 +111,14 @@ function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex-1 min-w-0 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left group ${
+                className={`relative flex-1 min-w-0 px-3 py-2.5 rounded-lg font-medium transition-all text-left whitespace-nowrap overflow-hidden ${
                   active
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
                 }`}
               >
-                <span className="block text-[10px] font-bold opacity-60 mb-0.5">{tabNumber(tab.title)}</span>
-                <span className="block truncate">{shortTitle(tab.title)}</span>
+                <span className="text-[10px] font-bold opacity-60 mr-1">{tabNumber(tab.title)}</span>
+                <span className="text-[11px]">{shortTitle(tab.title)}</span>
                 <span className={`absolute bottom-0 left-2 right-2 h-0.5 rounded-full ${active ? 'bg-white/40' : barColor}`} />
               </button>
             )
@@ -123,7 +133,7 @@ function Dashboard() {
             ? <div className="flex items-center justify-center h-48">
                 <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
               </div>
-            : <GanttChart data={scheduleData} year={year} />
+            : <GanttChart data={annualPlanData} year={annualPlanYear} />
         ) : (
           <>
             {(loadingList || loadingKpi) && (

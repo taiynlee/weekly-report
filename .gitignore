@@ -31,3 +31,9 @@ backend/weekly.db
 # Temp
 *.pptx
 *.tmp
+
+# Uploads (user files, may contain sensitive media)
+backend/uploads/
+
+# Claude project memory
+.claude/

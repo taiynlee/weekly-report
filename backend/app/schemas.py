@@ -6,6 +6,8 @@ class SubKPIItemOut(BaseModel):
     id: int
     content: str
     order_index: int
+    start_date: date | None = None
+    end_date: date | None = None
     model_config = {"from_attributes": True}
 
 
@@ -73,6 +75,7 @@ class SubKPIIn(BaseModel):
 class KPIUpdate(BaseModel):
     title: str | None = None
     status: str | None = None
+    percentage: int | None = None
     sub_kpis: list[SubKPIIn] | None = None
 
 
@@ -136,3 +139,76 @@ class ScheduleByKpi(BaseModel):
 class CopyYearRequest(BaseModel):
     from_year: int
     to_year: int
+
+
+# ── Annual Plan (sub_kpi-based Gantt source) ──────────────────────────────────
+
+class SegmentOut(BaseModel):
+    id: int
+    start_date: date | None
+    end_date: date | None
+    order_index: int
+    model_config = {"from_attributes": True}
+
+
+class SegmentCreate(BaseModel):
+    start_date: date | None = None
+    end_date: date | None = None
+
+
+class SegmentUpdate(BaseModel):
+    start_date: date | None = None
+    end_date: date | None = None
+
+
+class AnnualPlanItemOut(BaseModel):
+    id: int
+    content: str
+    start_date: date | None
+    end_date: date | None
+    order_index: int
+    segments: list[SegmentOut] = []
+    model_config = {"from_attributes": True}
+
+
+class AnnualPlanTaskOut(BaseModel):
+    id: int
+    sub_id: str
+    title: str
+    items: list[AnnualPlanItemOut]
+    model_config = {"from_attributes": True}
+
+
+class AnnualPlanKpiOut(BaseModel):
+    kpi_number: int
+    kpi_title: str
+    kpi_id: int | None
+    week_id: int | None
+    percentage: int | None
+    tasks: list[AnnualPlanTaskOut]
+
+
+class KpiCreate(BaseModel):
+    title: str
+
+
+class SubKpiCreate(BaseModel):
+    title: str
+    sub_id: str = ""
+
+
+class SubKpiUpdate(BaseModel):
+    title: str | None = None
+    sub_id: str | None = None
+
+
+class SubKpiItemCreate(BaseModel):
+    content: str
+    start_date: date | None = None
+    end_date: date | None = None
+
+
+class SubKpiItemUpdate(BaseModel):
+    content: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None

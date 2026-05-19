@@ -24,6 +24,7 @@ class KPI(Base):
     number: Mapped[int] = mapped_column(Integer, nullable=False)
     title: Mapped[str] = mapped_column(String(200), nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="not_started")
+    percentage: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     week: Mapped["Week"] = relationship(back_populates="kpis")
     sub_kpis: Mapped[list["SubKPI"]] = relationship(
@@ -55,8 +56,26 @@ class SubKPIItem(Base):
     sub_kpi_id: Mapped[int] = mapped_column(ForeignKey("sub_kpis.id"), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     order_index: Mapped[int] = mapped_column(Integer, default=0)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     sub_kpi: Mapped["SubKPI"] = relationship(back_populates="items")
+    segments: Mapped[list["SubKPIItemSegment"]] = relationship(
+        back_populates="item", cascade="all, delete-orphan",
+        order_by="SubKPIItemSegment.order_index"
+    )
+
+
+class SubKPIItemSegment(Base):
+    __tablename__ = "sub_kpi_item_segments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    item_id: Mapped[int] = mapped_column(ForeignKey("sub_kpi_items.id"), nullable=False)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    order_index: Mapped[int] = mapped_column(Integer, default=0)
+
+    item: Mapped["SubKPIItem"] = relationship(back_populates="segments")
 
 
 class Highlight(Base):

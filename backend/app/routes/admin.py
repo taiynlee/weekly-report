@@ -1,6 +1,7 @@
 import os
 import shutil
 import time
+from datetime import date as date_type
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
@@ -12,6 +13,9 @@ from app import models
 from app.schemas import (
     WeekCreate, WeekOut, KPIUpdate, KPIOut,
     HighlightOut, HighlightMediaOut, ItemUpdate, LinkCreate, GenerateRequest,
+    SubKpiCreate, SubKpiUpdate, SubKpiItemCreate, SubKpiItemUpdate,
+    AnnualPlanTaskOut, AnnualPlanItemOut, AnnualPlanKpiOut,
+    SegmentOut, SegmentCreate, SegmentUpdate,
 )
 
 router = APIRouter(prefix="/api/admin", tags=["admin"])
@@ -59,12 +63,24 @@ def create_week(body: WeekCreate, db: Session = Depends(get_db)):
     )
 
     if prev_week:
+        new_year = body.week_date.year
+
+        def _shift_date(d: date_type | None) -> date_type | None:
+            """Shift date to new_year when copying across years."""
+            if d is None or d.year == new_year:
+                return d
+            try:
+                return d.replace(year=new_year)
+            except ValueError:
+                return date_type(new_year, d.month, 28)
+
         for prev_kpi in sorted(prev_week.kpis, key=lambda k: k.number):
             new_kpi = models.KPI(
                 week_id=week.id,
                 number=prev_kpi.number,
                 title=prev_kpi.title,
                 status=prev_kpi.status,
+                percentage=prev_kpi.percentage,
             )
             new_kpi.highlights = [
                 models.Highlight(
@@ -84,7 +100,19 @@ def create_week(body: WeekCreate, db: Session = Depends(get_db)):
                 models.SubKPI(
                     sub_id=s.sub_id, title=s.title,
                     items=[
-                        models.SubKPIItem(content=i.content, order_index=i.order_index)
+                        models.SubKPIItem(
+                            content=i.content, order_index=i.order_index,
+                            start_date=_shift_date(i.start_date),
+                            end_date=_shift_date(i.end_date),
+                            segments=[
+                                models.SubKPIItemSegment(
+                                    start_date=_shift_date(seg.start_date),
+                                    end_date=_shift_date(seg.end_date),
+                                    order_index=seg.order_index,
+                                )
+                                for seg in i.segments
+                            ],
+                        )
                         for i in s.items
                     ],
                 )
@@ -113,6 +141,9 @@ def update_kpi(kpi_id: int, body: KPIUpdate, db: Session = Depends(get_db)):
 
     if body.status is not None:
         kpi.status = body.status
+
+    if body.percentage is not None:
+        kpi.percentage = body.percentage
 
     if body.sub_kpis is not None:
         for s in kpi.sub_kpis:
@@ -225,6 +256,142 @@ def delete_highlight_media(media_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Not found")
     _delete_upload(m.url)
     db.delete(m)
+    db.commit()
+
+
+# ── KPI Delete ────────────────────────────────────────────────────────────────
+
+@router.delete("/kpis/{kpi_id}", status_code=204)
+def delete_kpi(kpi_id: int, db: Session = Depends(get_db)):
+    kpi = db.query(models.KPI).filter(models.KPI.id == kpi_id).first()
+    if not kpi:
+        raise HTTPException(status_code=404, detail="KPI not found")
+    db.delete(kpi)
+    db.commit()
+
+
+# ── Sub-KPI CRUD ──────────────────────────────────────────────────────────────
+
+@router.post("/kpis/{kpi_id}/sub-kpis", response_model=AnnualPlanTaskOut, status_code=201)
+def add_sub_kpi(kpi_id: int, body: SubKpiCreate, db: Session = Depends(get_db)):
+    kpi = db.query(models.KPI).filter(models.KPI.id == kpi_id).first()
+    if not kpi:
+        raise HTTPException(status_code=404, detail="KPI not found")
+    sub_id = body.sub_id or f"{kpi.number}.{len(kpi.sub_kpis) + 1}"
+    s = models.SubKPI(kpi_id=kpi_id, sub_id=sub_id, title=body.title)
+    db.add(s)
+    db.commit()
+    db.refresh(s)
+    return s
+
+
+@router.put("/sub-kpis/{sub_kpi_id}", response_model=AnnualPlanTaskOut)
+def update_sub_kpi(sub_kpi_id: int, body: SubKpiUpdate, db: Session = Depends(get_db)):
+    s = db.query(models.SubKPI).filter(models.SubKPI.id == sub_kpi_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="SubKPI not found")
+    if body.title is not None:
+        s.title = body.title
+    if body.sub_id is not None:
+        s.sub_id = body.sub_id
+    db.commit()
+    db.refresh(s)
+    return s
+
+
+@router.delete("/sub-kpis/{sub_kpi_id}", status_code=204)
+def delete_sub_kpi(sub_kpi_id: int, db: Session = Depends(get_db)):
+    s = db.query(models.SubKPI).filter(models.SubKPI.id == sub_kpi_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="SubKPI not found")
+    db.delete(s)
+    db.commit()
+
+
+# ── Sub-KPI Item CRUD ──────────────────────────────────────────────────────────
+
+@router.post("/sub-kpis/{sub_kpi_id}/items", response_model=AnnualPlanItemOut, status_code=201)
+def add_sub_kpi_item(sub_kpi_id: int, body: SubKpiItemCreate, db: Session = Depends(get_db)):
+    s = db.query(models.SubKPI).filter(models.SubKPI.id == sub_kpi_id).first()
+    if not s:
+        raise HTTPException(status_code=404, detail="SubKPI not found")
+    item = models.SubKPIItem(
+        sub_kpi_id=sub_kpi_id,
+        content=body.content,
+        start_date=body.start_date,
+        end_date=body.end_date,
+        order_index=len(s.items),
+    )
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.put("/sub-kpi-items/{item_id}", response_model=AnnualPlanItemOut)
+def update_sub_kpi_item(item_id: int, body: SubKpiItemUpdate, db: Session = Depends(get_db)):
+    item = db.query(models.SubKPIItem).filter(models.SubKPIItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    if body.content is not None:
+        item.content = body.content
+    if body.start_date is not None:
+        item.start_date = body.start_date
+    if body.end_date is not None:
+        item.end_date = body.end_date
+    db.commit()
+    db.refresh(item)
+    return item
+
+
+@router.delete("/sub-kpi-items/{item_id}", status_code=204)
+def delete_sub_kpi_item(item_id: int, db: Session = Depends(get_db)):
+    item = db.query(models.SubKPIItem).filter(models.SubKPIItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    db.delete(item)
+    db.commit()
+
+
+# ── Sub-KPI Item Segments ─────────────────────────────────────────────────────
+
+@router.post("/sub-kpi-items/{item_id}/segments", response_model=SegmentOut, status_code=201)
+def add_segment(item_id: int, body: SegmentCreate, db: Session = Depends(get_db)):
+    item = db.query(models.SubKPIItem).filter(models.SubKPIItem.id == item_id).first()
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    seg = models.SubKPIItemSegment(
+        item_id=item_id,
+        start_date=body.start_date,
+        end_date=body.end_date,
+        order_index=len(item.segments),
+    )
+    db.add(seg)
+    db.commit()
+    db.refresh(seg)
+    return seg
+
+
+@router.put("/sub-kpi-item-segments/{seg_id}", response_model=SegmentOut)
+def update_segment(seg_id: int, body: SegmentUpdate, db: Session = Depends(get_db)):
+    seg = db.query(models.SubKPIItemSegment).filter(models.SubKPIItemSegment.id == seg_id).first()
+    if not seg:
+        raise HTTPException(status_code=404, detail="Segment not found")
+    if body.start_date is not None:
+        seg.start_date = body.start_date
+    if body.end_date is not None:
+        seg.end_date = body.end_date
+    db.commit()
+    db.refresh(seg)
+    return seg
+
+
+@router.delete("/sub-kpi-item-segments/{seg_id}", status_code=204)
+def delete_segment(seg_id: int, db: Session = Depends(get_db)):
+    seg = db.query(models.SubKPIItemSegment).filter(models.SubKPIItemSegment.id == seg_id).first()
+    if not seg:
+        raise HTTPException(status_code=404, detail="Segment not found")
+    db.delete(seg)
     db.commit()
 
 
