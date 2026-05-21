@@ -202,7 +202,17 @@ def delete_highlight(item_id: int, db: Session = Depends(get_db)):
     h = db.query(models.Highlight).filter(models.Highlight.id == item_id).first()
     if not h:
         raise HTTPException(status_code=404, detail="Not found")
+    kpi_id = h.kpi_id
     db.delete(h)
+    db.flush()
+    remaining = (
+        db.query(models.Highlight)
+        .filter(models.Highlight.kpi_id == kpi_id)
+        .order_by(models.Highlight.order_index)
+        .all()
+    )
+    for i, item in enumerate(remaining):
+        item.order_index = i
     db.commit()
 
 
@@ -349,7 +359,17 @@ def delete_sub_kpi_item(item_id: int, db: Session = Depends(get_db)):
     item = db.query(models.SubKPIItem).filter(models.SubKPIItem.id == item_id).first()
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+    sub_kpi_id = item.sub_kpi_id
     db.delete(item)
+    db.flush()
+    remaining = (
+        db.query(models.SubKPIItem)
+        .filter(models.SubKPIItem.sub_kpi_id == sub_kpi_id)
+        .order_by(models.SubKPIItem.order_index)
+        .all()
+    )
+    for i, r in enumerate(remaining):
+        r.order_index = i
     db.commit()
 
 
@@ -391,7 +411,17 @@ def delete_segment(seg_id: int, db: Session = Depends(get_db)):
     seg = db.query(models.SubKPIItemSegment).filter(models.SubKPIItemSegment.id == seg_id).first()
     if not seg:
         raise HTTPException(status_code=404, detail="Segment not found")
+    item_id = seg.item_id
     db.delete(seg)
+    db.flush()
+    remaining = (
+        db.query(models.SubKPIItemSegment)
+        .filter(models.SubKPIItemSegment.item_id == item_id)
+        .order_by(models.SubKPIItemSegment.order_index)
+        .all()
+    )
+    for i, r in enumerate(remaining):
+        r.order_index = i
     db.commit()
 
 

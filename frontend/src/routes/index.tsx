@@ -89,11 +89,11 @@ function Dashboard() {
 
       {/* Tab bar */}
       {!loadingList && (
-        <div className="flex gap-1 p-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
+        <div className="flex items-stretch gap-1 p-1 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
           {/* Schedule tab — leftmost */}
           <button
             onClick={() => setActiveTab('schedule')}
-            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap overflow-hidden ${
+            className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg text-[11px] font-medium transition-all text-center ${
               activeTab === 'schedule'
                 ? 'bg-blue-600 text-white shadow-sm'
                 : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
@@ -111,7 +111,7 @@ function Dashboard() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`relative flex-1 min-w-0 px-3 py-2.5 rounded-lg font-medium transition-all text-left whitespace-nowrap overflow-hidden ${
+                className={`relative flex-1 min-w-0 px-3 py-2.5 rounded-lg font-medium transition-all text-left flex items-center ${
                   active
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'

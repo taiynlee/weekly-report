@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import {
   Loader2, Plus, Trash2, Save, CheckCircle2, Sparkles,
   Link2, ImageIcon, VideoIcon, ChevronDown, ChevronUp,
-  ChevronLeft, ChevronRight, Clipboard, Star, CalendarDays,
+  ChevronLeft, ChevronRight, Clipboard, Star, CalendarDays, Target,
 } from 'lucide-react'
 import {
   fetchWeeks, fetchKPIsByWeek, fetchKPI,
@@ -544,8 +544,8 @@ function KpiEditCard({ kpiId, onSaved }: { kpiId: number; onSaved: () => void })
         {/* 年度計劃 — fixed left column */}
         <div className="w-80 flex-shrink-0 p-4">
           <div className="flex items-center gap-2 mb-3">
-            <CalendarDays className="w-[22px] h-[22px] text-blue-400 flex-shrink-0" />
-            <span className="text-[15px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">年度計劃</span>
+            <Target className="w-[22px] h-[22px] text-blue-500 flex-shrink-0" />
+            <span className="text-[15px] font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400">KPI指標</span>
           </div>
           <SubKpiSection kpi={kpi} />
         </div>
@@ -811,7 +811,7 @@ function AdminPanel() {
                 : 'text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
             }`}
           >
-            <Star className="w-3.5 h-3.5" />
+            <Target className="w-3.5 h-3.5" />
             KPI 管理
           </button>
           <button
