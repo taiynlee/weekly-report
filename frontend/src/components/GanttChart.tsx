@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
+import { Download } from 'lucide-react'
 import type { AnnualPlanKpi, Segment } from '../api/client'
+
+const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 interface Props { data: AnnualPlanKpi[]; year: number }
 
@@ -89,6 +92,21 @@ export function GanttChart({ data, year }: Props) {
   const todayPct = useMemo(() => getTodayPct(year), [year])
 
   return (
+    <div className="space-y-2">
+      {/* Toolbar */}
+      <div className="flex justify-end">
+        <a
+          href={`${API_BASE}/api/export/annual-plan/${year}/pptx`}
+          download={`annual-plan-${year}.pptx`}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-medium
+            bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700
+            text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+        >
+          <Download className="w-3.5 h-3.5" />
+          匯出 PPT
+        </a>
+      </div>
+
     <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden text-[11px]">
 
       {/* Month header */}
@@ -228,6 +246,7 @@ export function GanttChart({ data, year }: Props) {
           )
         })}
       </div>
+    </div>
     </div>
   )
 }

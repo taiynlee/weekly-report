@@ -9,6 +9,7 @@ from app.routes.kpis import router as kpis_router
 from app.routes.admin import router as admin_router
 from app.routes.schedule import router as schedule_router
 from app.routes.annual_plan import router as annual_plan_router
+from app.routes.export import router as export_router
 
 app = FastAPI(title=settings.app_name)
 
@@ -24,6 +25,7 @@ app.include_router(kpis_router)
 app.include_router(admin_router)
 app.include_router(schedule_router)
 app.include_router(annual_plan_router)
+app.include_router(export_router)
 
 UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
