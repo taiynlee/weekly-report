@@ -12,6 +12,7 @@ dist/
 # Node
 node_modules/
 frontend/dist/
+frontend/.tanstack/
 frontend/.env
 frontend/.env.*
 !frontend/.env.example
