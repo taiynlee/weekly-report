@@ -276,10 +276,26 @@ def _build_kpi_detail(prs, kpi: models.KPI, kpi_num: int):
     _badge_rect(slide, ML, Inches(0.78), Inches(1.20), Inches(0.30),
                 s_bg, f"● {s_label}", s_color, border=s_color, bw=0.5, size=8.5)
 
-    # ─ Panel layout ──────────────────────────────────────────────────────────
-    PANEL_TOP = Inches(1.18)
-    PANEL_H   = SLIDE_H - PANEL_TOP - Inches(0.12)
-    PHDR_H    = Inches(0.46)
+    # ─ Average % from highlights ──────────────────────────────────────────────
+    pct_vals = [hl.percentage for hl in kpi.highlights if hl.percentage is not None]
+    avg_pct  = round(sum(pct_vals) / len(pct_vals)) if pct_vals else None
+
+    # ─ Panel layout (dynamic height, vertically centred) ──────────────────────
+    PHDR_H = Inches(0.46)
+    SKPI_H = Inches(0.38)
+    ITEM_H = Inches(0.30)
+    HL_H   = Inches(0.50)
+    HL_GAP = Inches(0.04)
+
+    left_h  = sum(float(SKPI_H) + len(sk.items) * float(ITEM_H) for sk in kpi.sub_kpis)
+    right_h = len(kpi.highlights) * (float(HL_H) + float(HL_GAP))
+    needed  = float(PHDR_H) + max(left_h, right_h) + float(Inches(0.24))
+
+    PANEL_H   = min(max(needed, float(Inches(2.50))), float(Inches(5.20)))
+    CONTENT_START = float(Inches(1.15))
+    CONTENT_END   = float(SLIDE_H) - float(Inches(0.35))
+    PANEL_TOP = CONTENT_START + (CONTENT_END - CONTENT_START - PANEL_H) / 2
+    PANEL_TOP = max(PANEL_TOP, CONTENT_START)
     LEFT_X    = ML
     LEFT_W    = Inches(6.08)
     GAP       = Inches(0.25)
@@ -298,19 +314,19 @@ def _build_kpi_detail(prs, kpi: models.KPI, kpi_num: int):
     _text(slide, "⊙  KPI 指標", int(LEFT_X + Inches(0.14)), PANEL_TOP,
           Inches(3.0), PHDR_H, size=9.5, bold=True, color=BLUE_FG)
 
-    # "平均" label + donut
-    if kpi.percentage is not None:
-        pct_color = _pct_color(kpi.percentage)
+    # "平均" label + donut (average of highlight percentages)
+    if avg_pct is not None:
+        pct_color = _pct_color(avg_pct)
         D = Inches(0.40)
         d_x = int(LEFT_X + LEFT_W - D - Inches(0.12))
         d_y = int(PANEL_TOP + (PHDR_H - D) / 2)
-        _donut(slide, d_x, d_y, D, kpi.percentage, pct_color)
-        _text(slide, "平均", int(d_x - Inches(0.55)), PANEL_TOP,
+        _donut(slide, d_x, d_y, D, avg_pct, pct_color)
+        _text(slide, "平均", int(d_x - Inches(0.55)), int(PANEL_TOP),
               Inches(0.50), PHDR_H, size=8, color=TEXT_MUT, align=PP_ALIGN.RIGHT)
 
     # ─ Left panel content ────────────────────────────────────────────────────
-    row_y  = float(PANEL_TOP + PHDR_H + Inches(0.06))
-    max_y  = float(PANEL_TOP + PANEL_H - Inches(0.06))
+    row_y  = PANEL_TOP + float(PHDR_H) + float(Inches(0.06))
+    max_y  = PANEL_TOP + PANEL_H - float(Inches(0.06))
     SKPI_H = Inches(0.38)
     ITEM_H = Inches(0.30)
     PAD_L  = Inches(0.14)
@@ -340,11 +356,10 @@ def _build_kpi_detail(prs, kpi: models.KPI, kpi_num: int):
           Inches(4.0), PHDR_H, size=9.5, bold=True, color=STAR_CLR)
 
     # ─ Right panel content ───────────────────────────────────────────────────
-    HL_H   = Inches(0.50)
     NC_D   = Inches(0.30)   # number circle diameter
     DOT_D  = Inches(0.38)   # percentage donut diameter
-    row_y  = float(PANEL_TOP + PHDR_H + Inches(0.06))
-    max_y  = float(PANEL_TOP + PANEL_H - Inches(0.06))
+    row_y  = PANEL_TOP + float(PHDR_H) + float(Inches(0.06))
+    max_y  = PANEL_TOP + PANEL_H - float(Inches(0.06))
 
     for i, hl in enumerate(kpi.highlights, 1):
         if row_y + float(HL_H) > max_y:
