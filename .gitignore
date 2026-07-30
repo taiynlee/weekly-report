@@ -28,10 +28,13 @@ Thumbs.db
 
 # Database
 backend/weekly.db
+backend/backups/
+backend/weekly.db.broken.*
 
 # Temp
 *.pptx
 *.tmp
+*.log
 
 # Uploads (user files, may contain sensitive media)
 backend/uploads/

@@ -134,13 +134,35 @@ ANTHROPIC_API_KEY=sk-ant-...
 # 後端
 cd backend
 uv run alembic upgrade head
-uv run uvicorn app.main:app --port 8000 --reload
+uv run uvicorn app.main:app --port 8100 --reload
 
 # 前端
 cd frontend
 npm install
-npm run dev        # http://localhost:5174
+npm run dev        # http://localhost:5176
 ```
+
+或直接雙擊根目錄的 `start.bat` 同時啟動兩者。
+
+---
+
+## 備份與復原
+
+### 備份
+
+- `backend/scripts/backup_db.py`：用 SQLite `backup()` API 安全複製 `weekly.db`（不會複製到後端正在寫入的中間狀態），先寫暫存檔再原子性覆蓋，不會留下寫壞一半的備份
+- 備份到單一檔案 `backend/backups/weekly_backup.db`，**每天覆蓋**（不保留多版本）
+- Windows 排程工作 `WeeklyReport-DBBackup`，每天 18:00 執行；電腦當時未開機的話，開機後會自動補跑
+
+**已知限制**：因為只保留一份、每天覆蓋，最大可能遺失範圍是「當天 18:00 備份後 到 出事前」新增 / 修改的資料；若壞掉好幾天才發現，舊的正常資料也已被覆蓋，救不回來。
+
+### 復原
+
+1. 先停止後端（關閉 Backend cmd 視窗 / 停止 uvicorn），避免復原時檔案被佔用
+2. 執行 `backend/scripts/restore_db.ps1`
+   - 會先把目前（可能壞掉的）`weekly.db` 另存為 `weekly.db.broken.<時間戳>`（保留現場，這步本身可逆）
+   - 再把 `backend/backups/weekly_backup.db` 覆蓋回 `weekly.db`
+3. 重啟後端，用 `curl http://localhost:8100/api/weeks` 確認資料正常
 
 ---
 
@@ -161,7 +183,11 @@ weekly-report/
 │   │       ├── schedule.py     # 排程任務 CRUD
 │   │       └── export.py       # PPT 匯出
 │   ├── alembic/
+│   ├── scripts/
+│   │   ├── backup_db.py    # 每日備份腳本（排程工作呼叫）
+│   │   └── restore_db.ps1  # 手動復原腳本
 │   ├── uploads/        # gitignored — 使用者上傳的媒體檔
+│   ├── backups/        # gitignored — 每日覆蓋備份 weekly_backup.db
 │   ├── weekly.db       # gitignored
 │   └── .env            # gitignored — 放 API keys
 ├── frontend/
@@ -189,6 +215,9 @@ weekly-report/
 |------|------|
 | `backend/.env` (API keys) | gitignored ✅ |
 | `backend/weekly.db` | gitignored ✅ |
+| `backend/backups/`（含使用者資料的 DB 備份） | gitignored ✅ |
+| `backend/weekly.db.broken.*`（復原時保留的現場檔） | gitignored ✅ |
 | `backend/uploads/` | gitignored ✅ |
+| `*.log`（runtime log，可能含請求路徑） | gitignored ✅ |
 | `.claude/` (本地 AI 記憶) | gitignored ✅ |
 | `frontend/.tanstack/` | gitignored ✅ |
