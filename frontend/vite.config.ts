@@ -10,10 +10,10 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: 5174,
+    port: 5176,
     proxy: {
-      '/api':     'http://localhost:8000',
-      '/uploads': 'http://localhost:8000',
+      '/api':     'http://localhost:8100',
+      '/uploads': 'http://localhost:8100',
     },
   },
 })
