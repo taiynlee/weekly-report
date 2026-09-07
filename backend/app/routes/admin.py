@@ -482,6 +482,7 @@ def _query_azure_cost(sub_name: str) -> str:
            f"/providers/Microsoft.CostManagement/query?api-version=2023-11-01")
 
     def _query(from_d, to_d):
+        import time as _time
         body = _json.dumps({
             "type": "ActualCost",
             "timeframe": "Custom",
@@ -489,8 +490,19 @@ def _query_azure_cost(sub_name: str) -> str:
             "dataset": {"granularity": "None",
                         "aggregation": {"totalCost": {"name": "Cost", "function": "Sum"}}},
         }).encode()
-        data = _json.loads(_req.urlopen(
-            _req.Request(url, data=body, headers=headers, method="POST")).read())
+        # Cost Management API rate-limits aggressively per subscription; retry on 429.
+        for attempt in range(6):
+            try:
+                data = _json.loads(_req.urlopen(
+                    _req.Request(url, data=body, headers=headers, method="POST")).read())
+                break
+            except _req.HTTPError as e:
+                if e.code == 429 and attempt < 5:
+                    retry_after = e.headers.get("Retry-After")
+                    wait = int(retry_after) if retry_after else 10 * (attempt + 1)
+                    _time.sleep(wait)
+                    continue
+                raise
         rows = data["properties"]["rows"]
         cols = [c["name"] for c in data["properties"]["columns"]]
         if rows:
@@ -499,6 +511,8 @@ def _query_azure_cost(sub_name: str) -> str:
         return 0.0, "TWD"
 
     today          = date.today()
+    if today.day == 1:
+        today = today - timedelta(days=1)   # 月初時改用上個月最後一天
     days_since_sun = (today.weekday() + 1) % 7
     recent_sun     = today - timedelta(days=days_since_sun)
     prev_sun       = recent_sun - timedelta(days=7)
@@ -523,6 +537,29 @@ def _query_azure_cost(sub_name: str) -> str:
 
 # ── AWS Cost Skill ────────────────────────────────────────────────────────────
 
+def _aws_ca_bundle() -> str | None:
+    """boto3 ignores SSL_CERT_FILE/REQUESTS_CA_BUNDLE and uses its own bundled
+    certifi store, so on networks with a TLS-inspecting proxy (e.g. corporate
+    MITM CA) it fails to verify ce.us-east-1.amazonaws.com. Merge the corporate
+    CA into certifi's bundle so both intercepted and direct endpoints validate."""
+    corp_ca = os.environ.get("SSL_CERT_FILE")
+    if not corp_ca or not os.path.exists(corp_ca):
+        return None
+    import certifi
+    import hashlib
+    import tempfile
+    cache_key = hashlib.sha256(corp_ca.encode()).hexdigest()[:16]
+    merged = os.path.join(tempfile.gettempdir(), f"weekly_report_merged_ca_{cache_key}.pem")
+    if not os.path.exists(merged):
+        with open(merged, "wb") as out:
+            with open(certifi.where(), "rb") as f:
+                out.write(f.read())
+            out.write(b"\n")
+            with open(corp_ca, "rb") as f:
+                out.write(f.read())
+    return merged
+
+
 def _get_usd_to_twd() -> float:
     import urllib.request as _req
     import json as _json
@@ -544,11 +581,14 @@ def _query_aws_cost(account_name: str) -> str:
         region_name="us-east-1",
         aws_access_key_id=env[f"{prefix}_ACCESS_KEY_ID"],
         aws_secret_access_key=env[f"{prefix}_SECRET_ACCESS_KEY"],
+        verify=_aws_ca_bundle() or True,
     )
 
     rate = _get_usd_to_twd()
 
     today          = date.today()
+    if today.day == 1:
+        today = today - timedelta(days=1)   # 月初時改用上個月最後一天
     days_since_sun = (today.weekday() + 1) % 7
     recent_sun     = today - timedelta(days=days_since_sun)
     prev_sun       = recent_sun - timedelta(days=7)
@@ -611,7 +651,7 @@ async def generate_highlight(item_id: int, body: GenerateRequest, db: Session = 
 
 
 async def _call_llm(prompt: str, context: str | None, current_content: str) -> str:
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = _load_env_file().get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="ANTHROPIC_API_KEY not set")
 
